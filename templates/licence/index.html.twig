@@ -1,0 +1,558 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Gestion des Licences{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .page-header {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            padding: 3rem 0;
+            margin: -1.5rem -15px 2rem -15px;
+            border-radius: 0 0 20px 20px;
+        }
+        
+        .stats-card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border: none;
+        }
+        
+        .stats-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        }
+        
+        .licence-card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            overflow: hidden;
+            border: none;
+        }
+        
+        .software-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+            font-size: 1rem;
+        }
+        
+        .licence-key {
+            font-family: 'Courier New', monospace;
+            background: #f8f9fa;
+            padding: 0.5rem;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            border: 1px solid #e9ecef;
+            position: relative;
+        }
+        
+        .copy-btn {
+            position: absolute;
+            right: 0.5rem;
+            top: 50%;
+            transform: translateY(-50%);
+            border: none;
+            background: transparent;
+            color: #6c757d;
+            cursor: pointer;
+            padding: 0.25rem;
+        }
+        
+        .copy-btn:hover {
+            color: #28a745;
+        }
+        
+        .status-badge {
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .status-active {
+            background: linear-gradient(45deg, #28a745, #20c997);
+            color: white;
+        }
+        
+        .status-warning {
+            background: linear-gradient(45deg, #ffc107, #fd7e14);
+            color: white;
+        }
+        
+        .status-expired {
+            background: linear-gradient(45deg, #dc3545, #c82333);
+            color: white;
+        }
+        
+        .filter-section {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: center;
+        }
+        
+        .floating-action {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            z-index: 1000;
+            box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+        }
+        
+        .licence-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+        
+        .licence-item {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+            border-left: 4px solid #28a745;
+        }
+        
+        .licence-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+        
+        .search-box {
+            border-radius: 25px;
+            border: 2px solid #e9ecef;
+            padding: 0.75rem 1.5rem;
+            transition: all 0.3s ease;
+        }
+        
+        .search-box:focus {
+            border-color: #28a745;
+            box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
+        }
+        
+        @media (max-width: 768px) {
+            .licence-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+            }
+            
+            .floating-action {
+                bottom: 1rem;
+                right: 1rem;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <!-- En-tête -->
+    <div class="page-header text-center">
+        <h1 class="mb-3">
+            <i class="fas fa-key me-3"></i>
+            Gestion des Licences
+        </h1>
+        <p class="mb-0 opacity-75 fs-5">Gérez vos licences logicielles et leurs validités</p>
+    </div>
+
+    <!-- Statistiques -->
+    <div class="row mb-4">
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card stats-card h-100">
+                <div class="card-body text-center">
+                    <div class="d-flex justify-content-center mb-3">
+                        <div class="bg-primary rounded-circle p-3">
+                            <i class="fas fa-key fa-2x text-white"></i>
+                        </div>
+                    </div>
+                    <h3 class="text-primary mb-1">{{ licences|length }}</h3>
+                    <p class="text-muted mb-0">Total Licences</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card stats-card h-100">
+                <div class="card-body text-center">
+                    <div class="d-flex justify-content-center mb-3">
+                        <div class="bg-success rounded-circle p-3">
+                            <i class="fas fa-check-circle fa-2x text-white"></i>
+                        </div>
+                    </div>
+                    {% set activeLicences = licences|filter(l => l.dateExpiration is null or l.dateExpiration > date()) %}
+                    <h3 class="text-success mb-1">{{ activeLicences|length }}</h3>
+                    <p class="text-muted mb-0">Actives</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card stats-card h-100">
+                <div class="card-body text-center">
+                    <div class="d-flex justify-content-center mb-3">
+                        <div class="bg-warning rounded-circle p-3">
+                            <i class="fas fa-exclamation-triangle fa-2x text-white"></i>
+                        </div>
+                    </div>
+                    {% set expiringSoon = licences|filter(l => l.dateExpiration and l.dateExpiration > date() and l.dateExpiration < date('+30 days')) %}
+                    <h3 class="text-warning mb-1">{{ expiringSoon|length }}</h3>
+                    <p class="text-muted mb-0">Expirent bientôt</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card stats-card h-100">
+                <div class="card-body text-center">
+                    <div class="d-flex justify-content-center mb-3">
+                        <div class="bg-danger rounded-circle p-3">
+                            <i class="fas fa-times-circle fa-2x text-white"></i>
+                        </div>
+                    </div>
+                    {% set expiredLicences = licences|filter(l => l.dateExpiration and l.dateExpiration < date()) %}
+                    <h3 class="text-danger mb-1">{{ expiredLicences|length }}</h3>
+                    <p class="text-muted mb-0">Expirées</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtres et recherche -->
+    <div class="filter-section">
+        <div class="row align-items-center">
+            <div class="col-md-6 mb-3 mb-md-0">
+                <div class="input-group">
+                    <span class="input-group-text bg-white border-end-0">
+                        <i class="fas fa-search text-muted"></i>
+                    </span>
+                    <input type="text" 
+                           class="form-control search-box border-start-0" 
+                           placeholder="Rechercher par nom de logiciel, fournisseur..."
+                           id="searchInput">
+                </div>
+            </div>
+            <div class="col-md-3 mb-3 mb-md-0">
+                <select class="form-select" id="statusFilter">
+                    <option value="">Tous les statuts</option>
+                    <option value="active">Actives</option>
+                    <option value="expiring">Expirent bientôt</option>
+                    <option value="expired">Expirées</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <div class="d-flex gap-2">
+                    <button class="btn btn-outline-primary" onclick="exportToCSV()">
+                        <i class="fas fa-download me-1"></i>Export
+                    </button>
+                    <button class="btn btn-outline-secondary" onclick="window.print()">
+                        <i class="fas fa-print me-1"></i>Imprimer
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Grille des licences -->
+    <div class="licence-grid" id="licenceGrid">
+        {% for licence in licences %}
+            {% set isExpired = licence.dateExpiration and licence.dateExpiration < date() %}
+            {% set isExpiringSoon = licence.dateExpiration and licence.dateExpiration > date() and licence.dateExpiration < date('+30 days') %}
+            {% set isActive = licence.dateExpiration is null or (licence.dateExpiration > date() and not isExpiringSoon) %}
+            
+            <div class="licence-item" 
+                 data-software="{{ licence.nomLogiciel|lower }}" 
+                 data-supplier="{{ licence.fournisseur|lower }}"
+                 data-status="{% if isExpired %}expired{% elseif isExpiringSoon %}expiring{% else %}active{% endif %}">
+                
+                <!-- En-tête de la carte -->
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <div class="d-flex align-items-center">
+                        <div class="software-icon me-3" style="background: linear-gradient(45deg, #007bff, #6610f2);">
+                            {{ licence.nomLogiciel|slice(0, 2)|upper }}
+                        </div>
+                        <div>
+                            <h5 class="mb-0 fw-bold">{{ licence.nomLogiciel }}</h5>
+                            <small class="text-muted">ID: {{ licence.id }}</small>
+                        </div>
+                    </div>
+                    
+                    <!-- Statut -->
+                    <span class="status-badge {% if isExpired %}status-expired{% elseif isExpiringSoon %}status-warning{% else %}status-active{% endif %}">
+                        {% if isExpired %}
+                            Expirée
+                        {% elseif isExpiringSoon %}
+                            Expire bientôt
+                        {% else %}
+                            Active
+                        {% endif %}
+                    </span>
+                </div>
+
+                <!-- Informations principales -->
+                <div class="mb-3">
+                    <div class="row g-2">
+                        <div class="col-6">
+                            <small class="text-muted d-block">Fournisseur</small>
+                            <strong>{{ licence.fournisseur ?: 'Non défini' }}</strong>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted d-block">Date d'achat</small>
+                            <strong>{{ licence.dateAchat ? licence.dateAchat|date('d/m/Y') : 'Non définie' }}</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Clé de licence -->
+                <div class="mb-3">
+                    <small class="text-muted d-block mb-1">Clé de licence</small>
+                    <div class="licence-key position-relative">
+                        <span class="licence-key-text">{{ licence.cle ?: 'Non définie' }}</span>
+                        {% if licence.cle %}
+                            <button class="copy-btn" onclick="copyToClipboard('{{ licence.cle }}', this)" title="Copier la clé">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Date d'expiration -->
+                <div class="mb-3">
+                    <div class="d-flex align-items-center justify-content-between">
+                        <div class="flex-grow-1">
+                            <small class="text-muted d-block">Expiration</small>
+                            <strong>
+                                {% if licence.dateExpiration %}
+                                    {{ licence.dateExpiration|date('d/m/Y') }}
+                                    {% set daysLeft = licence.dateExpiration.diff(date()).days %}
+                                    {% if daysLeft >= 0 %}
+                                        <small class="text-muted">({{ daysLeft }} jours restants)</small>
+                                    {% else %}
+                                        <small class="text-danger">({{ daysLeft|abs }} jours de retard)</small>
+                                    {% endif %}
+                                {% else %}
+                                    Permanente
+                                {% endif %}
+                            </strong>
+                        </div>
+                        {% if licence.dateExpiration %}
+                            <div class="progress" style="width: 60px; height: 8px;">
+                                {% set totalDays = licence.dateAchat and licence.dateExpiration ? licence.dateExpiration.diff(licence.dateAchat).days : 365 %}
+                                {% set usedDays = licence.dateAchat ? date().diff(licence.dateAchat).days : 0 %}
+                                {% set percentage = totalDays > 0 ? (usedDays / totalDays * 100)|round : 0 %}
+                                <div class="progress-bar {% if percentage > 80 %}bg-danger{% elseif percentage > 60 %}bg-warning{% else %}bg-success{% endif %}" 
+                                     style="width: {{ percentage > 100 ? 100 : percentage }}%"></div>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="action-buttons mt-3">
+                    <a href="{{ path('app_licence_show', {'id': licence.id}) }}" 
+                       class="btn btn-outline-primary btn-sm flex-fill">
+                        <i class="fas fa-eye me-1"></i>Détails
+                    </a>
+                    <a href="{{ path('app_licence_edit', {'id': licence.id}) }}" 
+                       class="btn btn-outline-secondary btn-sm flex-fill">
+                        <i class="fas fa-edit me-1"></i>Modifier
+                    </a>
+                    <button class="btn btn-outline-danger btn-sm" 
+                            onclick="confirmDelete({{ licence.id }}, '{{ licence.nomLogiciel }}')"
+                            title="Supprimer">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+        {% else %}
+            <div class="col-12">
+                <div class="text-center py-5">
+                    <i class="fas fa-key fa-4x text-muted mb-4"></i>
+                    <h4 class="text-muted mb-3">Aucune licence trouvée</h4>
+                    <p class="text-muted mb-4">Commencez par ajouter votre première licence logicielle.</p>
+                    <a href="{{ path('app_licence_new') }}" class="btn btn-success btn-lg">
+                        <i class="fas fa-plus me-2"></i>Créer une licence
+                    </a>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Bouton flottant -->
+<a href="{{ path('app_licence_new') }}" class="btn btn-success btn-lg rounded-circle floating-action" title="Nouvelle licence">
+    <i class="fas fa-plus fa-lg"></i>
+</a>
+
+<!-- Modal de confirmation -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle text-warning me-2"></i>
+                    Confirmer la suppression
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Êtes-vous sûr de vouloir supprimer la licence :</p>
+                <p class="fw-bold text-primary" id="licenceToDelete"></p>
+                <p class="text-muted">Cette action est irréversible.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
+                    <i class="fas fa-trash me-1"></i>Supprimer
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Toast pour les notifications -->
+<div class="toast-container position-fixed bottom-0 end-0 p-3">
+    <div id="copyToast" class="toast" role="alert">
+        <div class="toast-header">
+            <i class="fas fa-check-circle text-success me-2"></i>
+            <strong class="me-auto">Succès</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
+        </div>
+        <div class="toast-body">
+            Clé copiée dans le presse-papiers !
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        // Variables globales
+        let licenceToDeleteId = null;
+        const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+        const copyToast = new bootstrap.Toast(document.getElementById('copyToast'));
+
+        // Fonction de recherche et filtrage
+        function filterLicences() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+            const statusFilter = document.getElementById('statusFilter').value;
+            const licenceItems = document.querySelectorAll('.licence-item');
+
+            licenceItems.forEach(item => {
+                const software = item.dataset.software;
+                const supplier = item.dataset.supplier;
+                const status = item.dataset.status;
+
+                const matchesSearch = software.includes(searchTerm) || supplier.includes(searchTerm);
+                const matchesStatus = !statusFilter || status === statusFilter;
+
+                item.style.display = matchesSearch && matchesStatus ? 'block' : 'none';
+            });
+        }
+
+        // Event listeners pour la recherche
+        document.getElementById('searchInput').addEventListener('input', filterLicences);
+        document.getElementById('statusFilter').addEventListener('change', filterLicences);
+
+        // Fonction de copie dans le presse-papiers
+        async function copyToClipboard(text, button) {
+            try {
+                await navigator.clipboard.writeText(text);
+                
+                // Animation du bouton
+                const icon = button.querySelector('i');
+                icon.className = 'fas fa-check';
+                button.style.color = '#28a745';
+                
+                // Afficher le toast
+                copyToast.show();
+                
+                // Restaurer l'icône après 2 secondes
+                setTimeout(() => {
+                    icon.className = 'fas fa-copy';
+                    button.style.color = '#6c757d';
+                }, 2000);
+                
+            } catch (err) {
+                console.error('Erreur lors de la copie:', err);
+                alert('Impossible de copier la clé');
+            }
+        }
+
+        // Fonction de confirmation de suppression
+        function confirmDelete(id, software) {
+            licenceToDeleteId = id;
+            document.getElementById('licenceToDelete').textContent = software;
+            deleteModal.show();
+        }
+
+        // Confirmation de suppression
+        document.getElementById('confirmDeleteBtn').addEventListener('click', function() {
+            if (licenceToDeleteId) {
+                window.location.href = `{{ path('app_licence_delete', {'id': '__ID__'}) }}`.replace('__ID__', licenceToDeleteId);
+            }
+        });
+
+        // Export CSV
+        function exportToCSV() {
+            const data = [];
+            const headers = ['ID', 'Logiciel', 'Clé', 'Date d\'achat', 'Date d\'expiration', 'Fournisseur', 'Statut'];
+            data.push(headers.join(','));
+
+            document.querySelectorAll('.licence-item[style*="block"], .licence-item:not([style*="none"])').forEach(item => {
+                const software = item.querySelector('h5').textContent.trim();
+                const id = item.querySelector('small').textContent.replace('ID: ', '');
+                const key = item.querySelector('.licence-key-text').textContent.trim();
+                const supplier = item.querySelector('strong').textContent.trim();
+                const status = item.querySelector('.status-badge').textContent.trim();
+                
+                const row = [id, `"${software}"`, `"${key}"`, '""', '""', `"${supplier}"`, `"${status}"`];
+                data.push(row.join(','));
+            });
+
+            const csvContent = data.join('\n');
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `licences_${new Date().toISOString().split('T')[0]}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // Initialisation
+        document.addEventListener('DOMContentLoaded', function() {
+            // Vérifier les licences qui expirent bientôt
+            const expiringSoon = document.querySelectorAll('[data-status="expiring"]');
+            if (expiringSoon.length > 0) {
+                console.log(`Attention: ${expiringSoon.length} licence(s) expire(nt) bientôt !`);
+            }
+        });
+    </script>
+{% endblock %}

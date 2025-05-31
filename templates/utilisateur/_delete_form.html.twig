@@ -1,0 +1,5 @@
+{# templates/utilisateur/_delete_form.html.twig #}
+
+{{ form_start(delete_form) }}
+    <button class="btn btn-danger btn-sm" onclick="return confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur ?');">Supprimer</button>
+{{ form_end(delete_form) }}

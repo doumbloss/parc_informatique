@@ -1,0 +1,32 @@
+{# templates/licence/show.html.twig #}
+{% extends 'base.html.twig' %}
+
+{% block title %}Détails de la Licence{% endblock %}
+
+{% block body %}
+<div class="container mt-5">
+    <h1 class="mb-4 text-center text-info">Détails de la Licence</h1>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <ul class="list-group list-group-flush">
+                <li class="list-group-item"><strong>Nom du Logiciel :</strong> {{ licence.nomLogiciel }}</li>
+                <li class="list-group-item"><strong>Clé :</strong> {{ licence.cle }}</li>
+                <li class="list-group-item"><strong>Date d'Achat :</strong> {{ licence.dateAchat ? licence.dateAchat|date('d/m/Y') : '-' }}</li>
+                <li class="list-group-item"><strong>Date d'Expiration :</strong> {{ licence.dateExpiration ? licence.dateExpiration|date('d/m/Y') : '-' }}</li>
+                <li class="list-group-item"><strong>Fournisseur :</strong> {{ licence.fournisseur }}</li>
+                <li class="list-group-item"><strong>Équipement lié :</strong> {{ licence.equipement ? licence.equipement.nom : '-' }}</li>
+            </ul>
+
+            <div class="d-flex justify-content-center gap-3 mt-4">
+                <a href="{{ path('app_licence_edit', {'id': licence.id}) }}" class="btn btn-outline-secondary">Modifier</a>
+                {% include 'licence/_delete_form.html.twig' %}
+            </div>
+
+            <div class="mt-3 text-center">
+                <a href="{{ path('app_licence_index') }}" class="btn btn-secondary">Retour à la liste</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

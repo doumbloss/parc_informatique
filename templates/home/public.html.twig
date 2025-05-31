@@ -1,0 +1,769 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Accueil - UGANC{% endblock %}
+
+{% block page_title %}Tableau de bord - Gestion du parc informatique{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        /* Reset et configuration plein écran */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        html, body {
+            height: 100vh;
+            overflow-x: hidden;
+            font-family: 'Inter', system-ui, sans-serif;
+        }
+        
+        .main-container {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* Section Hero optimisée */
+        .hero-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem 0;
+            position: relative;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+        
+        .hero-section::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 20"><circle cx="20" cy="10" r="2" fill="white" opacity="0.1"/><circle cx="80" cy="15" r="1.5" fill="white" opacity="0.08"/><circle cx="50" cy="5" r="1" fill="white" opacity="0.06"/></svg>') repeat;
+            animation: float 20s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+        
+        /* Conteneur principal scrollable */
+        .content-wrapper {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1.5rem 0;
+        }
+        
+        /* Cartes de statistiques optimisées */
+        .stats-card {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            height: 160px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        
+        .stats-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+        }
+        
+        .stats-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+        }
+        
+        .stats-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #667eea;
+            line-height: 1;
+        }
+        
+        .stats-label {
+            color: #6c757d;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 500;
+        }
+        
+        .stats-trend {
+            font-size: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+        
+        .trend-up { color: #28a745; }
+        .trend-down { color: #dc3545; }
+        
+        .stats-icon {
+            font-size: 2.5rem;
+            color: #667eea;
+            opacity: 0.15;
+            position: absolute;
+            right: 1rem;
+            top: 1rem;
+        }
+        
+        /* Graphiques optimisés */
+        .chart-container {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            margin-top: 1rem;
+        }
+        
+        .chart-wrapper {
+            position: relative;
+            height: 250px;
+        }
+        
+        .mini-chart {
+            height: 60px;
+            margin-top: 0.5rem;
+        }
+        
+        /* Actions rapides compactes */
+        .quick-actions {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+        }
+        
+        .action-btn {
+            background: white;
+            border: none;
+            border-radius: 10px;
+            padding: 1.25rem;
+            text-decoration: none;
+            color: #495057;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+            display: block;
+            height: 100%;
+            min-height: 120px;
+        }
+        
+        .action-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            color: #667eea;
+            text-decoration: none;
+        }
+        
+        .action-icon {
+            font-size: 2rem;
+            color: #667eea;
+            margin-bottom: 0.75rem;
+        }
+        
+        .action-title {
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+            font-size: 1rem;
+        }
+        
+        .action-description {
+            font-size: 0.8rem;
+            color: #6c757d;
+            line-height: 1.3;
+        }
+        
+        /* Feed d'activité optimisé */
+        .activity-feed {
+            background: white;
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .activity-item {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .activity-item:last-child {
+            border-bottom: none;
+        }
+        
+        .activity-icon {
+            width: 35px;
+            height: 35px;
+            background: #667eea;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            margin-right: 0.75rem;
+            font-size: 0.9rem;
+            flex-shrink: 0;
+        }
+        
+        .activity-content {
+            flex: 1;
+        }
+        
+        .activity-title {
+            font-weight: 600;
+            margin-bottom: 0.15rem;
+            font-size: 0.9rem;
+        }
+        
+        .activity-time {
+            font-size: 0.75rem;
+            color: #6c757d;
+        }
+        
+        /* Animations optimisées */
+        .fade-in {
+            animation: fadeIn 0.6s ease-out;
+        }
+        
+        @keyframes fadeIn {
+            from { 
+                opacity: 0; 
+                transform: translateY(20px); 
+            }
+            to { 
+                opacity: 1; 
+                transform: translateY(0); 
+            }
+        }
+        
+        .stagger-1 { animation-delay: 0.1s; }
+        .stagger-2 { animation-delay: 0.2s; }
+        .stagger-3 { animation-delay: 0.3s; }
+        .stagger-4 { animation-delay: 0.4s; }
+        
+        .real-time-indicator {
+            display: inline-block;
+            width: 6px;
+            height: 6px;
+            background: #28a745;
+            border-radius: 50%;
+            margin-left: 0.5rem;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+        
+        /* Responsive optimisé */
+        @media (max-width: 768px) {
+            .hero-section {
+                padding: 1.5rem 0;
+            }
+            
+            .content-wrapper {
+                padding: 1rem 0;
+            }
+            
+            .stats-card {
+                height: 140px;
+                padding: 1.25rem;
+            }
+            
+            .stats-number {
+                font-size: 1.75rem;
+            }
+            
+            .chart-wrapper {
+                height: 200px;
+            }
+            
+            .action-btn {
+                min-height: 100px;
+                padding: 1rem;
+            }
+        }
+        
+        /* Scrollbar personnalisée */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 3px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: #667eea;
+            border-radius: 3px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: #5a6fd8;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+<div class="main-container">
+    <!-- Section Hero Compacte -->
+    <div class="hero-section">
+        <div class="container-fluid px-4">
+            <div class="row align-items-center">
+                <div class="col-lg-8">
+                    <h1 class="h2 fw-bold mb-2 fade-in">
+                        Centre Informatique UGANC
+                        <span class="real-time-indicator" title="Données en temps réel"></span>
+                    </h1>
+                    <p class="mb-3 fade-in stagger-1" style="font-size: 1rem;">
+                        Plateforme centralisée pour la gestion intelligente de votre parc informatique
+                    </p>
+                    <div class="d-flex gap-2 fade-in stagger-2">
+                        <a href="{{ path('app_dashboard') }}" class="btn btn-light px-3">
+                            <i class="bi bi-speedometer2 me-1"></i>
+                            Dashboard
+                        </a>
+                        <a href="#" class="btn btn-outline-light px-3">
+                            <i class="bi bi-play-circle me-1"></i>
+                            Guide
+                        </a>
+                    </div>
+                </div>
+                <div class="col-lg-4 text-center fade-in stagger-3">
+                    <div class="position-relative d-inline-block">
+                        <canvas id="heroChart" width="120" height="120"></canvas>
+                        <div class="position-absolute top-50 start-50 translate-middle text-center">
+                            <div class="h4 mb-0" id="heroPercentage">0%</div>
+                            <small style="font-size: 0.7rem;">Actifs</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contenu principal scrollable -->
+    <div class="content-wrapper">
+        <!-- Statistiques -->
+        <div class="container-fluid px-4">
+            <div class="row g-3">
+                <div class="col-lg-3 col-md-6 fade-in stagger-1">
+                    <div class="stats-card text-center">
+                        <i class="bi bi-laptop stats-icon"></i>
+                        <div>
+                            <div class="stats-number" id="equipmentCount">0</div>
+                            <div class="stats-label">Équipements</div>
+                        </div>
+                        <div class="stats-trend trend-up">
+                            <i class="bi bi-arrow-up"></i>
+                            <span>+12 ce mois</span>
+                        </div>
+                        <div class="mini-chart">
+                            <canvas id="equipmentChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6 fade-in stagger-2">
+                    <div class="stats-card text-center">
+                        <i class="bi bi-building stats-icon"></i>
+                        <div>
+                            <div class="stats-number" id="buildingCount">0</div>
+                            <div class="stats-label">Bâtiments</div>
+                        </div>
+                        <div class="stats-trend trend-up">
+                            <i class="bi bi-arrow-up"></i>
+                            <span>+2 cette année</span>
+                        </div>
+                        <div class="mini-chart">
+                            <canvas id="buildingChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6 fade-in stagger-3">
+                    <div class="stats-card text-center">
+                        <i class="bi bi-people stats-icon"></i>
+                        <div>
+                            <div class="stats-number" id="userCount">0</div>
+                            <div class="stats-label">Utilisateurs</div>
+                        </div>
+                        <div class="stats-trend trend-up">
+                            <i class="bi bi-arrow-up"></i>
+                            <span>+8 ce mois</span>
+                        </div>
+                        <div class="mini-chart">
+                            <canvas id="userChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-3 col-md-6 fade-in stagger-4">
+                    <div class="stats-card text-center">
+                        <i class="bi bi-exclamation-triangle stats-icon"></i>
+                        <div>
+                            <div class="stats-number" id="alertCount">0</div>
+                            <div class="stats-label">Alertes</div>
+                        </div>
+                        <div class="stats-trend trend-down">
+                            <i class="bi bi-arrow-down"></i>
+                            <span>-3 cette semaine</span>
+                        </div>
+                        <div class="mini-chart">
+                            <canvas id="alertChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Graphiques -->
+        <div class="container-fluid px-4">
+            <div class="row g-3">
+                <div class="col-lg-8">
+                    <div class="chart-container fade-in">
+                        <h5 class="mb-3">
+                            <i class="bi bi-graph-up me-2"></i>
+                            Évolution du parc informatique
+                        </h5>
+                        <div class="chart-wrapper">
+                            <canvas id="mainChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4">
+                    <div class="chart-container fade-in">
+                        <h5 class="mb-3">
+                            <i class="bi bi-pie-chart me-2"></i>
+                            Répartition par type
+                        </h5>
+                        <div class="chart-wrapper">
+                            <canvas id="pieChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Actions rapides -->
+        <div class="container-fluid px-4">
+            <div class="quick-actions fade-in">
+                <h5 class="text-center mb-3">Actions rapides</h5>
+                <div class="row g-3">
+                    <div class="col-lg-3 col-md-6">
+                        <a href="#" class="action-btn">
+                            <div class="text-center">
+                                <i class="bi bi-plus-circle action-icon"></i>
+                                <div class="action-title">Ajouter équipement</div>
+                                <div class="action-description">Nouvel équipement informatique</div>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="col-lg-3 col-md-6">
+                        <a href="#" class="action-btn">
+                            <div class="text-center">
+                                <i class="bi bi-search action-icon"></i>
+                                <div class="action-title">Rechercher</div>
+                                <div class="action-description">Équipement ou utilisateur</div>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="col-lg-3 col-md-6">
+                        <a href="#" class="action-btn">
+                            <div class="text-center">
+                                <i class="bi bi-bar-chart action-icon"></i>
+                                <div class="action-title">Rapports</div>
+                                <div class="action-description">Statistiques détaillées</div>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="col-lg-3 col-md-6">
+                        <a href="#" class="action-btn">
+                            <div class="text-center">
+                                <i class="bi bi-gear action-icon"></i>
+                                <div class="action-title">Configuration</div>
+                                <div class="action-description">Paramètres système</div>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Activité récente -->
+        <div class="container-fluid px-4 pb-4">
+            <div class="row g-3">
+                <div class="col-lg-8">
+                    <div class="activity-feed fade-in">
+                        <h5 class="mb-3">
+                            <i class="bi bi-clock-history me-2"></i>
+                            Activité récente
+                            <span class="real-time-indicator"></span>
+                        </h5>
+                        <div id="recentActivity">
+                            <!-- Contenu chargé dynamiquement -->
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4">
+                    <div class="activity-feed fade-in">
+                        <h5 class="mb-3">
+                            <i class="bi bi-bell me-2"></i>
+                            Notifications
+                            <span class="badge bg-danger ms-2" id="notificationBadge">0</span>
+                        </h5>
+                        <div id="notifications">
+                            <!-- Contenu chargé dynamiquement -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <script>
+        // Configuration optimisée des données
+        const DATA_CONFIG = {
+            equipment: {
+                total: 267,
+                active: 220,
+                trend: [220, 230, 235, 242, 248, 255, 267],
+                types: {
+                    'Portables': 89,
+                    'Fixes': 76,
+                    'Serveurs': 12,
+                    'Imprimantes': 43,
+                    'Réseau': 28,
+                    'Autres': 19
+                }
+            },
+            buildings: { total: 12, data: [8, 9, 10, 11, 12, 12, 12] },
+            users: { total: 167, data: [145, 148, 152, 156, 159, 162, 167] },
+            alerts: { total: 3, data: [15, 12, 8, 11, 6, 4, 3] }
+        };
+
+        // Animation optimisée des compteurs
+        function animateCounters() {
+            const counters = [
+                { id: 'equipmentCount', target: DATA_CONFIG.equipment.total },
+                { id: 'buildingCount', target: DATA_CONFIG.buildings.total },
+                { id: 'userCount', target: DATA_CONFIG.users.total },
+                { id: 'alertCount', target: DATA_CONFIG.alerts.total }
+            ];
+            
+            counters.forEach(({ id, target }) => {
+                const element = document.getElementById(id);
+                const increment = target / 30;
+                let current = 0;
+                
+                const timer = setInterval(() => {
+                    current += increment;
+                    if (current >= target) {
+                        current = target;
+                        clearInterval(timer);
+                    }
+                    element.textContent = Math.floor(current);
+                }, 50);
+            });
+
+            // Pourcentage hero
+            const percentage = Math.round((DATA_CONFIG.equipment.active / DATA_CONFIG.equipment.total) * 100);
+            setTimeout(() => {
+                document.getElementById('heroPercentage').textContent = percentage + '%';
+            }, 1000);
+        }
+
+        // Configuration Chart.js
+        Chart.defaults.font.family = 'Inter, system-ui, sans-serif';
+        Chart.defaults.color = '#6c757d';
+        Chart.defaults.font.size = 12;
+
+        // Graphique principal
+        const mainChart = new Chart(document.getElementById('mainChart'), {
+            type: 'line',
+            data: {
+                labels: ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul'],
+                datasets: [{
+                    label: 'Équipements',
+                    data: DATA_CONFIG.equipment.trend,
+                    borderColor: '#667eea',
+                    backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }, {
+                    label: 'Utilisateurs',
+                    data: DATA_CONFIG.users.data,
+                    borderColor: '#764ba2',
+                    backgroundColor: 'rgba(118, 75, 162, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'top' } },
+                scales: {
+                    y: { beginAtZero: false, grid: { color: 'rgba(0,0,0,0.05)' } },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+
+        // Graphique circulaire
+        const pieChart = new Chart(document.getElementById('pieChart'), {
+            type: 'doughnut',
+            data: {
+                labels: Object.keys(DATA_CONFIG.equipment.types),
+                datasets: [{
+                    data: Object.values(DATA_CONFIG.equipment.types),
+                    backgroundColor: ['#667eea', '#764ba2', '#f093fb', '#4facfe', '#43e97b', '#38f9d7'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { padding: 15, usePointStyle: true, font: { size: 11 } }
+                    }
+                }
+            }
+        });
+
+        // Mini graphiques optimisés
+        function createMiniChart(canvasId, data, color) {
+            return new Chart(document.getElementById(canvasId), {
+                type: 'line',
+                data: {
+                    labels: Array(7).fill(''),
+                    datasets: [{
+                        data: data,
+                        borderColor: color,
+                        backgroundColor: color + '20',
+                        tension: 0.4,
+                        fill: true,
+                        pointRadius: 0,
+                        borderWidth: 1.5
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: { x: { display: false }, y: { display: false } }
+                }
+            });
+        }
+
+        // Graphique hero
+        const heroChart = new Chart(document.getElementById('heroChart'), {
+            type: 'doughnut',
+            data: {
+                datasets: [{
+                    data: [82, 18],
+                    backgroundColor: ['#ffffff', 'rgba(255,255,255,0.2)'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: false,
+                cutout: '70%',
+                plugins: { legend: { display: false } }
+            }
+        });
+
+        // Chargement des activités
+        function loadContent() {
+            // Activités récentes
+            const activities = [
+                { icon: 'plus', title: 'Nouvel équipement ajouté', desc: 'Dell OptiPlex 7090 - il y a 2h' },
+                { icon: 'wrench', title: 'Maintenance programmée', desc: 'Serveur principal - il y a 4h' },
+                { icon: 'person-plus', title: 'Nouvel utilisateur', desc: 'Marie Dubois - hier' },
+                { icon: 'shield-check', title: 'Sauvegarde complétée', desc: 'Base de données - il y a 8h' }
+            ];
+
+            document.getElementById('recentActivity').innerHTML = activities.map(a => `
+                <div class="activity-item">
+                    <div class="activity-icon"><i class="bi bi-${a.icon}"></i></div>
+                    <div class="activity-content">
+                        <div class="activity-title">${a.title}</div>
+                        <div class="activity-time">${a.desc}</div>
+                    </div>
+                </div>
+            `).join('');
+
+            // Notifications
+            const notifications = [
+                { icon: 'exclamation-triangle', title: 'Mise à jour requise', desc: '3 équipements' },
+                { icon: 'check-circle', title: 'Inventaire terminé', desc: 'Bâtiment A' },
+                { icon: 'info-circle', title: 'Rapport mensuel', desc: 'Disponible' }
+            ];
+
+            document.getElementById('notifications').innerHTML = notifications.map(n => `
+                <div class="activity-item">
+                    <div class="activity-icon"><i class="bi bi-${n.icon}"></i></div>
+                    <div class="activity-content">
+                        <div class="activity-title">${n.title}</div>
+                        <div class="activity-time">${n.desc}</div>
+                    </div>
+                </div>
+            `).join('');
+
+            document.getElementById('notificationBadge').textContent = notifications.length;
+        }
+
+        // Observer d'intersection optimisé
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.animationPlayState = 'running';
+                    
+                    if (entry.target.classList.contains('stats-card')) {
+                        animateCounters();
+                        setTimeout(() => {
+                            createMiniChart('equipmentChart', DATA_CONFIG.equipment.trend, '#667eea');
+                            createMiniChart('buildingChart', DATA_CONFIG.buildings.data, '#764ba2');
+                            createMiniChart('userChart', DATA_CONFIG.users.data, '#f093fb');
+                            createMiniChart('alertChart', DATA_CONFIG.alerts.data, '#dc3545');
+                        }, 500);
+                    }
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.1 });
+        
+        // Initialisation
+        document.addEventListener('DOMContentLoaded', () => {
+            loadContent();
+            
+            // Observer les éléments animés
+            document.querySelectorAll('.fade-in, .stats-card').forEach(el => {
+                el.style.animationPlayState = 'paused';
+                observer.observe(el);
+            });
+        });
+    </script>
+{% endblock %}

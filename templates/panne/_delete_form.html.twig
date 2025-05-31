@@ -1,0 +1,5 @@
+{# templates/panne/_delete_form.html.twig #}
+<form method="post" action="{{ path('app_panne_delete', {'id': panne.id}) }}" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cette panne ?');">
+    <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ panne.id) }}">
+    <button class="btn btn-danger btn-sm mt-2">Supprimer</button>
+</form>

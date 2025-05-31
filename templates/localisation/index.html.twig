@@ -1,0 +1,225 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Liste des Localisations{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <style>
+        .map-container {
+            width: 300px;
+            height: 200px;
+            border: 1px solid #dee2e6;
+            border-radius: 0.375rem;
+        }
+        .btn-group-vertical .btn {
+            margin-bottom: 0.25rem;
+        }
+        .btn-group-vertical .btn:last-child {
+            margin-bottom: 0;
+        }
+        .table-actions {
+            min-width: 120px;
+        }
+        .loading-map {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #6c757d;
+            font-size: 0.875rem;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h2 mb-0">Liste des Localisations</h1>
+                <a href="{{ path('app_localisation_new') }}" class="btn btn-success">
+                    <i class="fas fa-plus me-2" aria-hidden="true"></i>
+                    Créer une nouvelle localisation
+                </a>
+            </div>
+
+            {% if localisations is empty %}
+                <div class="alert alert-info text-center">
+                    <i class="fas fa-info-circle me-2" aria-hidden="true"></i>
+                    Aucune localisation n'a été créée pour le moment.
+                    <a href="{{ path('app_localisation_new') }}" class="btn btn-sm btn-primary ms-2">Créer la première</a>
+                </div>
+            {% else %}
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover align-middle" role="table">
+                        <thead class="table-success">
+                            <tr>
+                                <th scope="col">ID</th>
+                                <th scope="col">Nom Bâtiment</th>
+                                <th scope="col">Étage</th>
+                                <th scope="col">Salle</th>
+                                <th scope="col">Code Local</th>
+                                <th scope="col">Responsable</th>
+                                <th scope="col" class="text-center">Localisation</th>
+                                <th scope="col" class="table-actions">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for localisation in localisations %}
+                                <tr>
+                                    <td class="text-center">
+                                        <span class="badge bg-secondary">{{ localisation.id }}</span>
+                                    </td>
+                                    <td>
+                                        <strong>{{ localisation.nomBatiment|e }}</strong>
+                                    </td>
+                                    <td class="text-center">
+                                        {% if localisation.etage is not empty %}
+                                            {{ localisation.etage|e }}
+                                        {% else %}
+                                            <span class="text-muted">—</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ localisation.salle|e }}</td>
+                                    <td class="text-center">
+                                        <code>{{ localisation.codeLocal|e }}</code>
+                                    </td>
+                                    <td>
+                                        {% if localisation.responsable is not empty %}
+                                            {{ localisation.responsable|e }}
+                                        {% else %}
+                                            <span class="text-muted">Non assigné</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center">
+                                        {% if localisation.latitude is not null and localisation.longitude is not null %}
+                                            <div class="map-container mx-auto" 
+                                                 id="map-{{ localisation.id }}"
+                                                 data-lat="{{ localisation.latitude }}"
+                                                 data-lng="{{ localisation.longitude }}"
+                                                 data-title="{{ localisation.nomBatiment|e }} - {{ localisation.salle|e }}"
+                                                 role="img"
+                                                 aria-label="Carte de localisation pour {{ localisation.nomBatiment|e }}">
+                                                <div class="loading-map">
+                                                    <i class="fas fa-spinner fa-spin me-2" aria-hidden="true"></i>
+                                                    Chargement de la carte...
+                                                </div>
+                                            </div>
+                                        {% else %}
+                                            <div class="text-muted">
+                                                <i class="fas fa-map-marker-alt me-1" aria-hidden="true"></i>
+                                                Coordonnées non définies
+                                            </div>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group-vertical" role="group" aria-label="Actions pour {{ localisation.nomBatiment|e }}">
+                                            <a href="{{ path('app_localisation_show', {'id': localisation.id}) }}" 
+                                               class="btn btn-sm btn-outline-primary"
+                                               title="Voir les détails">
+                                                <i class="fas fa-eye me-1" aria-hidden="true"></i>
+                                                Afficher
+                                            </a>
+                                            <a href="{{ path('app_localisation_edit', {'id': localisation.id}) }}" 
+                                               class="btn btn-sm btn-outline-warning"
+                                               title="Modifier cette localisation">
+                                                <i class="fas fa-edit me-1" aria-hidden="true"></i>
+                                                Modifier
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="mt-3 text-muted small">
+                    <i class="fas fa-info-circle me-1" aria-hidden="true"></i>
+                    {{ localisations|length }} localisation{{ localisations|length > 1 ? 's' : '' }} trouvée{{ localisations|length > 1 ? 's' : '' }}
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            // Configuration globale pour toutes les cartes
+            const mapConfig = {
+                zoom: 15,
+                tileLayer: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                attribution: '&copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors'
+            };
+
+            // Initialiser toutes les cartes
+            const mapContainers = document.querySelectorAll('[id^="map-"]');
+            const maps = new Map();
+
+            mapContainers.forEach(container => {
+                const lat = parseFloat(container.dataset.lat);
+                const lng = parseFloat(container.dataset.lng);
+                const title = container.dataset.title;
+
+                if (isNaN(lat) || isNaN(lng)) {
+                    console.warn(`Coordonnées invalides pour la carte ${container.id}`);
+                    return;
+                }
+
+                try {
+                    // Créer la carte
+                    const map = L.map(container.id, {
+                        scrollWheelZoom: false,
+                        doubleClickZoom: true,
+                        touchZoom: true
+                    }).setView([lat, lng], mapConfig.zoom);
+
+                    // Ajouter la couche de tuiles
+                    L.tileLayer(mapConfig.tileLayer, {
+                        attribution: mapConfig.attribution,
+                        maxZoom: 19
+                    }).addTo(map);
+
+                    // Ajouter le marqueur avec popup
+                    const marker = L.marker([lat, lng]).addTo(map);
+                    if (title) {
+                        marker.bindPopup(title);
+                    }
+
+                    // Stocker la référence de la carte
+                    maps.set(container.id, map);
+
+                    // Supprimer le message de chargement
+                    const loadingDiv = container.querySelector('.loading-map');
+                    if (loadingDiv) {
+                        loadingDiv.remove();
+                    }
+
+                } catch (error) {
+                    console.error(`Erreur lors de l'initialisation de la carte ${container.id}:`, error);
+                    container.innerHTML = '<div class="text-danger small">Erreur de chargement de la carte</div>';
+                }
+            });
+
+            // Redimensionner les cartes si nécessaire (par exemple lors du redimensionnement de la fenêtre)
+            let resizeTimer;
+            window.addEventListener('resize', function() {
+                clearTimeout(resizeTimer);
+                resizeTimer = setTimeout(function() {
+                    maps.forEach(map => {
+                        map.invalidateSize();
+                    });
+                }, 250);
+            });
+
+            // Gestion des erreurs réseau pour Leaflet
+            window.addEventListener('offline', function() {
+                console.warn('Mode hors ligne détecté - les cartes peuvent ne pas se charger correctement');
+            });
+        });
+    </script>
+{% endblock %}

@@ -1,0 +1,61 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Hello DashboardController!{% endblock %}
+
+{% block body %}
+<h1>Tableau de bord</h1>
+
+<div class="row">
+    <div class="col-md-3">
+        <div class="card text-white bg-primary mb-3">
+            <div class="card-body">
+                <h5 class="card-title">Équipements</h5>
+                <p class="card-text">{{ nbEquipements }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-success mb-3">
+            <div class="card-body">
+                <h5 class="card-title">Utilisateurs</h5>
+                <p class="card-text">{{ nbUtilisateurs }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-danger mb-3">
+            <div class="card-body">
+                <h5 class="card-title">Pannes actives</h5>
+                <p class="card-text">{{ nbPannesActives }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-info mb-3">
+            <div class="card-body">
+                <h5 class="card-title">Licences</h5>
+                <p class="card-text">{{ nbLicences }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<canvas id="pannesChart" width="400" height="150"></canvas>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const ctx = document.getElementById('pannesChart').getContext('2d');
+    const chart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: {{ pannesParMois|map(p => p.mois)|json_encode|raw }},
+            datasets: [{
+                label: 'Pannes signalées par mois',
+                data: {{ pannesParMois|map(p => p.total)|json_encode|raw }},
+                backgroundColor: 'rgba(255,99,132,0.5)',
+            }]
+        }
+    });
+</script>
+
+{% endblock %}

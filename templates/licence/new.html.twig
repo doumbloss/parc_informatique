@@ -1,0 +1,16 @@
+{# templates/licence/new.html.twig #}
+{% extends 'base.html.twig' %}
+
+{% block title %}Créer une Licence{% endblock %}
+
+{% block body %}
+<div class="container mt-5">
+    <h1 class="mb-4 text-center text-success">Créer une Nouvelle Licence</h1>
+
+    {% include 'licence/_form.html.twig' with {'button_label': 'Créer'} %}
+
+    <div class="text-center mt-3">
+        <a href="{{ path('app_licence_index') }}" class="btn btn-secondary">Retour à la liste</a>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}UGANC - Gestion Parc Informatique{% endblock %}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Système de gestion du parc informatique de l'UGANC">
+
+    {# Bootstrap & Icons #}
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    
+    {# Fonts #}
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary-color: #667eea;
+            --primary-dark: #5a67d8;
+            --secondary-color: #764ba2;
+            --sidebar-bg: #1a202c;
+            --sidebar-hover: #2d3748;
+            --content-bg: #f7fafc;
+            --text-primary: #2d3748;
+            --text-secondary: #718096;
+            --border-color: #e2e8f0;
+            --success-color: #48bb78;
+            --warning-color: #ed8936;
+            --danger-color: #f56565;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            display: flex;
+            min-height: 100vh;
+            margin: 0;
+            background-color: var(--content-bg);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        /* Sidebar Styles */
+        .sidebar {
+            min-width: 280px;
+            max-width: 280px;
+            background: linear-gradient(180deg, var(--sidebar-bg) 0%, #2d3748 100%);
+            color: white;
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            padding: 0;
+            z-index: 1000;
+            box-shadow: var(--shadow-lg);
+            transition: transform 0.3s ease;
+        }
+
+        .sidebar.collapsed {
+            transform: translateX(-100%);
+        }
+
+        .sidebar-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(0, 0, 0, 0.1);
+        }
+
+        .sidebar-header h4 {
+            margin: 0;
+            font-weight: 600;
+            font-size: 1.25rem;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .sidebar-nav {
+            padding: 1rem 0;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .sidebar .nav-link {
+            color: #e2e8f0;
+            padding: 0.75rem 1.5rem;
+            margin: 0.25rem 1rem;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            position: relative;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+        }
+
+        .sidebar .nav-link:hover {
+            background: var(--sidebar-hover);
+            color: white;
+            transform: translateX(5px);
+        }
+
+        .sidebar .nav-link.active {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .sidebar .nav-link.active::before {
+            content: '';
+            position: absolute;
+            left: -1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 4px;
+            height: 20px;
+            background: white;
+            border-radius: 2px;
+        }
+
+        .sidebar .nav-link i {
+            margin-right: 0.75rem;
+            font-size: 1.1rem;
+            width: 20px;
+            text-align: center;
+        }
+
+        .sidebar-footer {
+            padding: 1rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(0, 0, 0, 0.1);
+        }
+
+        /* Content Area */
+        .content {
+            margin-left: 280px;
+            padding: 0;
+            background-color: var(--content-bg);
+            flex-grow: 1;
+            width: calc(100% - 280px);
+            transition: margin-left 0.3s ease, width 0.3s ease;
+        }
+
+        .content.expanded {
+            margin-left: 0;
+            width: 100%;
+        }
+
+        /* Top Navigation */
+        .top-nav {
+            background: white;
+            padding: 1rem 2rem;
+            box-shadow: var(--shadow);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 999;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--text-primary);
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 8px;
+            transition: background-color 0.2s;
+        }
+
+        .mobile-menu-btn:hover {
+            background-color: var(--border-color);
+        }
+
+        .breadcrumb-nav {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .page-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin: 0;
+            color: var(--text-primary);
+        }
+
+        /* User Dropdown */
+        .user-dropdown .dropdown-toggle {
+            background: var(--content-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 0.5rem 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .user-dropdown .dropdown-toggle:hover {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .user-dropdown .dropdown-menu {
+            border: none;
+            box-shadow: var(--shadow-lg);
+            border-radius: 12px;
+            padding: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .user-dropdown .dropdown-item {
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .user-dropdown .dropdown-item:hover {
+            background: var(--content-bg);
+        }
+
+        /* Main Content */
+        main.main-content {
+            padding: 2rem;
+            min-height: calc(100vh - 80px);
+        }
+
+        /* Notifications */
+        .notification-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: var(--danger-color);
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            font-size: 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+        }
+
+        /* Overlay for mobile */
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+        }
+
+        .sidebar-overlay.show {
+            display: block;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1024px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            
+            .sidebar.show {
+                transform: translateX(0);
+            }
+            
+            .content {
+                margin-left: 0;
+                width: 100%;
+            }
+
+            .mobile-menu-btn {
+                display: block;
+            }
+
+            .top-nav {
+                padding: 1rem;
+            }
+
+            main.main-content {
+                padding: 1rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .page-title {
+                font-size: 1.25rem;
+            }
+
+            .breadcrumb-nav {
+                gap: 0.5rem;
+            }
+
+            .user-dropdown .dropdown-toggle {
+                padding: 0.5rem;
+            }
+
+            .user-dropdown .dropdown-toggle .username {
+                display: none;
+            }
+        }
+
+        /* Animations */
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Loading Spinner */
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--border-color);
+            border-radius: 50%;
+            border-top-color: var(--primary-color);
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Status Indicators */
+        .status-online {
+            color: var(--success-color);
+        }
+
+        .status-offline {
+            color: var(--text-secondary);
+        }
+
+        .status-warning {
+            color: var(--warning-color);
+        }
+
+        /* Custom Scrollbar */
+        .sidebar-nav::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .sidebar-nav::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .sidebar-nav::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 3px;
+        }
+
+        .sidebar-nav::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.5);
+        }
+    </style>
+
+    {% block stylesheets %}{% endblock %}
+</head>
+<body>
+
+    <!-- Sidebar Overlay (Mobile) -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- Sidebar -->
+    <nav class="sidebar d-flex flex-column" id="sidebar">
+        <div class="sidebar-header">
+            <h4 class="text-center">
+                <i class="bi bi-pc-display me-2"></i>
+                UGANC
+            </h4>
+        </div>
+        
+        <div class="sidebar-nav">
+            <ul class="nav flex-column">
+                <li class="nav-item">
+                    <a href="{{ path('app_dashboard') }}" class="nav-link{% if app.request.attributes.get('_route') starts with 'app_dashboard' %} active{% endif %}">
+                        <i class="bi bi-speedometer2"></i>
+                        <span>Dashboard</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ path('app_equipement_index') }}" class="nav-link{% if app.request.attributes.get('_route') starts with 'app_equipement' %} active{% endif %}">
+                        <i class="bi bi-cpu"></i>
+                        <span>Équipements</span>
+                        <span class="notification-badge">12</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ path('app_batiment_index') }}" class="nav-link{% if app.request.attributes.get('_route') starts with 'app_batiment' %} active{% endif %}">
+                        <i class="bi bi-building"></i>
+                        <span>Bâtiments</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ path('app_utilisateur_index') }}" class="nav-link{% if app.request.attributes.get('_route') starts with 'app_utilisateur' %} active{% endif %}">
+                        <i class="bi bi-people"></i>
+                        <span>Utilisateurs</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ path('app_localisation_index') }}" class="nav-link{% if app.request.attributes.get('_route') starts with 'app_localisation' %} active{% endif %}">
+                        <i class="bi bi-geo-alt"></i>
+                        <span>Localisation</span>  
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a href="{{ path('app_panne_index') }}" class="nav-link{% if app.request.attributes.get('_route') starts with 'app_panne' %} active{% endif %}">
+                        <i class="bi bi-people"></i>
+                        <span>Panne</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{{ path('app_historique_stats') }}" class="nav-link{% if app.request.attributes.get('_route') starts with 'app_panne' %} active{% endif %}">
+                        <i class="bi bi-bar-chart"></i>
+                        <span>Rapports</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link">
+                        <i class="bi bi-gear"></i>
+                        <span>Paramètres</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+        
+        <div class="sidebar-footer">
+            <a href="{{ path('app_dashboard') }}" class="nav-link text-danger">
+                <i class="bi bi-box-arrow-right"></i>
+                <span>Déconnexion</span>
+            </a>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="content" id="content">
+        <!-- Top Navigation -->
+        <nav class="top-nav">
+            <div class="breadcrumb-nav">
+                <button class="mobile-menu-btn" id="mobileMenuBtn">
+                    <i class="bi bi-list"></i>
+                </button>
+                <h2 class="page-title">{% block page_title %}Bienvenue{% endblock %}</h2>
+            </div>
+
+            {% if app.user %}
+                <div class="user-dropdown dropdown">
+                    <button class="dropdown-toggle" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                        <div class="d-flex align-items-center">
+                            <div class="status-online me-2">
+                                <i class="bi bi-circle-fill" style="font-size: 0.5rem;"></i>
+                            </div>
+                            <i class="bi bi-person-circle fs-5"></i>
+                            {# <span class="username ms-2">{{ app.user.username }}</span> #}
+                        </div>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                        <li>
+                            <a class="dropdown-item" href="#">
+                                <i class="bi bi-person"></i>
+                                <span>Mon Profil</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="#">
+                                <i class="bi bi-gear"></i>
+                                <span>Préférences</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item" href="#">
+                                <i class="bi bi-question-circle"></i>
+                                <span>Aide</span>
+                            </a>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <a class="dropdown-item text-danger" href="{{ path('app_dashboard') }}">
+                                <i class="bi bi-box-arrow-right"></i>
+                                <span>Déconnexion</span>
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            {% endif %}
+        </nav>
+
+        <!-- Main Content Area -->
+        <main class="main-content fade-in">
+            {% block body %}{% endblock %}
+        </main>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    
+    <script>
+        // Mobile menu functionality
+        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+        const sidebar = document.getElementById('sidebar');
+        const sidebarOverlay = document.getElementById('sidebarOverlay');
+        const content = document.getElementById('content');
+
+        function toggleSidebar() {
+            sidebar.classList.toggle('show');
+            sidebarOverlay.classList.toggle('show');
+            content.classList.toggle('expanded');
+        }
+
+        function closeSidebar() {
+            sidebar.classList.remove('show');
+            sidebarOverlay.classList.remove('show');
+            content.classList.remove('expanded');
+        }
+
+        mobileMenuBtn?.addEventListener('click', toggleSidebar);
+        sidebarOverlay?.addEventListener('click', closeSidebar);
+
+        // Close sidebar on window resize if screen becomes large
+        window.addEventListener('resize', () => {
+            if (window.innerWidth > 1024) {
+                closeSidebar();
+            }
+        });
+
+        // Add active state animation
+        document.querySelectorAll('.sidebar .nav-link').forEach(link => {
+            link.addEventListener('click', function(e) {
+                // Add loading state
+                const icon = this.querySelector('i');
+                const originalClass = icon.className;
+                icon.className = 'loading-spinner';
+                
+                setTimeout(() => {
+                    icon.className = originalClass;
+                }, 500);
+            });
+        });
+
+        // Notification system
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+            notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+            notification.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 5000);
+        }
+
+        // Auto-hide notifications after page load
+        window.addEventListener('load', () => {
+            // Simulate connection status
+            const statusIndicator = document.querySelector('.status-online i');
+            if (statusIndicator) {
+                setInterval(() => {
+                    statusIndicator.style.opacity = statusIndicator.style.opacity === '0.3' ? '1' : '0.3';
+                }, 2000);
+            }
+        });
+
+        // Smooth scroll for better UX
+        document.documentElement.style.scrollBehavior = 'smooth';
+
+        // Add keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            // Ctrl/Cmd + B to toggle sidebar
+            if ((e.ctrlKey || e.metaKey) && e.key === 'b') {
+                e.preventDefault();
+                toggleSidebar();
+            }
+            
+            // Escape to close sidebar
+            if (e.key === 'Escape') {
+                closeSidebar();
+            }
+        });
+    </script>
+    
+    {% block javascripts %}{% endblock %}
+</body>
+</html>

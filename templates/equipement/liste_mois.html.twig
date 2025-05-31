@@ -1,0 +1,22 @@
+<h2>Équipements achetés au mois {{ mois }}</h2>
+
+<table>
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Nom</th>
+            <th>Date d'achat</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for equipement in equipements %}
+            <tr>
+                <td>{{ equipement.id }}</td>
+                <td>{{ equipement.nom }}</td>
+                <td>{{ equipement.date_achat|date('d/m/Y') }}</td>
+            </tr>
+        {% else %}
+            <tr><td colspan="3">Aucun équipement pour ce mois.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>

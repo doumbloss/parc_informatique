@@ -1,0 +1,356 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Historique{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .table-container {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        
+        .badge-type {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+        }
+        
+        .text-truncate-custom {
+            max-width: 150px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .btn-group-actions {
+            display: flex;
+            gap: 0.25rem;
+        }
+        
+        .equipment-badge {
+            background: linear-gradient(45deg, #007bff, #0056b3);
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        
+        .no-data {
+            color: #6c757d;
+            font-style: italic;
+        }
+        
+        .page-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem 0;
+            margin: -1rem -15px 2rem -15px;
+            border-radius: 0 0 15px 15px;
+        }
+        
+        @media (max-width: 768px) {
+            .btn-group-actions {
+                flex-direction: column;
+            }
+            
+            .table-responsive {
+                font-size: 0.875rem;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <!-- En-tête de page -->
+    <div class="page-header text-center">
+        <h1 class="mb-2">
+            <i class="fas fa-history me-2"></i>
+            Historique des Équipements
+        </h1>
+        <p class="mb-0 opacity-75">Suivi des modifications et événements</p>
+    </div>
+
+    <!-- Statistiques rapides -->
+    <div class="row mb-4">
+        <div class="col-md-3 col-6 mb-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <h5 class="card-title text-primary">{{ historiques|length }}</h5>
+                    <p class="card-text small text-muted mb-0">Total événements</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6 mb-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <h5 class="card-title text-success">
+                        {{ historiques|filter(h => h.typeEvenement == 'Création')|length }}
+                    </h5>
+                    <p class="card-text small text-muted mb-0">Créations</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6 mb-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <h5 class="card-title text-warning">
+                        {{ historiques|filter(h => h.typeEvenement == 'Modification')|length }}
+                    </h5>
+                    <p class="card-text small text-muted mb-0">Modifications</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 col-6 mb-3">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center">
+                    <h5 class="card-title text-danger">
+                        {{ historiques|filter(h => h.typeEvenement == 'Suppression')|length }}
+                    </h5>
+                    <p class="card-text small text-muted mb-0">Suppressions</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Actions principales -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <button class="btn btn-outline-secondary btn-sm" onclick="window.print()">
+                <i class="fas fa-print me-1"></i>Imprimer
+            </button>
+            <button class="btn btn-outline-info btn-sm ms-2" onclick="exportToCSV()">
+                <i class="fas fa-download me-1"></i>Exporter CSV
+            </button>
+        </div>
+        <a href="{{ path('app_historique_new') }}" class="btn btn-success">
+            <i class="fas fa-plus me-1"></i>Nouvel événement
+        </a>
+    </div>
+
+    <!-- Tableau principal -->
+    <div class="table-container">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0" id="historiqueTable">
+                <thead class="table-dark">
+                    <tr>
+                        <th scope="col" class="text-center">#</th>
+                        <th scope="col">
+                            <i class="fas fa-cogs me-1"></i>Équipement
+                        </th>
+                        <th scope="col">
+                            <i class="fas fa-calendar me-1"></i>Date
+                        </th>
+                        <th scope="col">
+                            <i class="fas fa-tag me-1"></i>Type
+                        </th>
+                        <th scope="col">Ancienne valeur</th>
+                        <th scope="col">Nouvelle valeur</th>
+                        <th scope="col">
+                            <i class="fas fa-user me-1"></i>Utilisateur
+                        </th>
+                        <th scope="col">
+                            <i class="fas fa-comment me-1"></i>Commentaire
+                        </th>
+                        <th scope="col" class="text-center">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for historique in historiques %}
+                    <tr>
+                        <td class="text-center">
+                            <span class="badge bg-light text-dark">{{ historique.id }}</span>
+                        </td>
+                        <td>
+                            {% if historique.equipement %}
+                                <span class="equipment-badge">
+                                    ID: {{ historique.equipement.id }}
+                                </span>
+                            {% else %}
+                                <span class="text-muted fst-italic">Non défini</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if historique.dateEvenement %}
+                                <div>
+                                    <small class="text-primary fw-bold">
+                                        {{ historique.dateEvenement|date('d/m/Y') }}
+                                    </small><br>
+                                    <small class="text-muted">
+                                        {{ historique.dateEvenement|date('H:i') }}
+                                    </small>
+                                </div>
+                            {% else %}
+                                <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% set typeClass = 'secondary' %}
+                            {% if historique.typeEvenement == 'Création' %}
+                                {% set typeClass = 'success' %}
+                            {% elseif historique.typeEvenement == 'Modification' %}
+                                {% set typeClass = 'warning' %}
+                            {% elseif historique.typeEvenement == 'Suppression' %}
+                                {% set typeClass = 'danger' %}
+                            {% endif %}
+                            <span class="badge bg-{{ typeClass }} badge-type">
+                                {{ historique.typeEvenement }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if historique.ancienneValeur %}
+                                <span class="text-truncate-custom d-inline-block" 
+                                      title="{{ historique.ancienneValeur|striptags }}">
+                                    {{ historique.ancienneValeur|raw }}
+                                </span>
+                            {% else %}
+                                <span class="no-data">-</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if historique.nouvelleValeur %}
+                                <span class="text-truncate-custom d-inline-block" 
+                                      title="{{ historique.nouvelleValeur|striptags }}">
+                                    {{ historique.nouvelleValeur|raw }}
+                                </span>
+                            {% else %}
+                                <span class="no-data">-</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center me-2" 
+                                     style="width: 30px; height: 30px; font-size: 0.75rem; color: white;">
+                                    {{ historique.utilisateurAction|first|upper }}
+                                </div>
+                                <small>{{ historique.utilisateurAction }}</small>
+                            </div>
+                        </td>
+                        <td>
+                            {% if historique.commentaire %}
+                                <span class="text-truncate-custom d-inline-block" 
+                                      title="{{ historique.commentaire|striptags }}">
+                                    {{ historique.commentaire|raw }}
+                                </span>
+                            {% else %}
+                                <span class="no-data">Aucun commentaire</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-group-actions">
+                                <a href="{{ path('app_historique_show', {'id': historique.id}) }}" 
+                                   class="btn btn-sm btn-outline-primary" 
+                                   title="Voir les détails">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="{{ path('app_historique_edit', {'id': historique.id}) }}" 
+                                   class="btn btn-sm btn-outline-warning" 
+                                   title="Modifier">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <button class="btn btn-sm btn-outline-danger" 
+                                        title="Supprimer"
+                                        onclick="confirmDelete({{ historique.id }})">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="9" class="text-center py-5">
+                            <div class="no-data">
+                                <i class="fas fa-inbox fa-3x mb-3 d-block text-muted"></i>
+                                <h5 class="text-muted">Aucun historique disponible</h5>
+                                <p class="text-muted">Commencez par créer votre premier événement d'historique.</p>
+                                <a href="{{ path('app_historique_new') }}" class="btn btn-primary mt-2">
+                                    <i class="fas fa-plus me-1"></i>Créer un événement
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Pagination (si nécessaire) -->
+    {% if historiques|length > 10 %}
+    <div class="d-flex justify-content-center mt-4">
+        <nav aria-label="Navigation des pages">
+            <!-- Ajoutez ici votre logique de pagination -->
+        </nav>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Modal de confirmation de suppression -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirmer la suppression</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                Êtes-vous sûr de vouloir supprimer cet événement d'historique ? Cette action est irréversible.
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Supprimer</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        // Fonction de confirmation de suppression
+        function confirmDelete(id) {
+            const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+            const confirmBtn = document.getElementById('confirmDeleteBtn');
+            
+            confirmBtn.onclick = function() {
+                // Redirection vers la route de suppression
+                window.location.href = `{{ path('app_historique_delete', {'id': '__ID__'}) }}`.replace('__ID__', id);
+            };
+            
+            modal.show();
+        }
+
+        // Fonction d'export CSV
+        function exportToCSV() {
+            const table = document.getElementById('historiqueTable');
+            const rows = Array.from(table.querySelectorAll('tr'));
+            
+            const csvContent = rows.map(row => {
+                const cells = Array.from(row.querySelectorAll('th, td'));
+                return cells.map(cell => `"${cell.textContent.trim()}"`).join(',');
+            }).join('\n');
+            
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', 'historique_equipements.csv');
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // Initialisation des tooltips Bootstrap
+        document.addEventListener('DOMContentLoaded', function() {
+            const tooltipTriggerList = [].slice.call(document.querySelectorAll('[title]'));
+            tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+        });
+    </script>
+{% endblock %}

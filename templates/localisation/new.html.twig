@@ -1,0 +1,811 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Créer une Localisation{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <style>
+        .search-container {
+            position: relative;
+            margin-bottom: 15px;
+        }
+        
+        .search-input {
+            width: 100%;
+            padding: 12px 40px 12px 15px;
+            border: 2px solid #28a745;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+        
+        .search-input:focus {
+            outline: none;
+            border-color: #20c997;
+            box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.1);
+        }
+        
+        .search-icon {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #28a745;
+            font-size: 18px;
+        }
+        
+        .suggestions-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 0 0 8px 8px;
+            max-height: 200px;
+            overflow-y: auto;
+            z-index: 1000;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            display: none;
+        }
+        
+        .suggestion-item {
+            padding: 12px 15px;
+            cursor: pointer;
+            border-bottom: 1px solid #f8f9fa;
+            transition: background-color 0.2s;
+        }
+        
+        .suggestion-item:hover,
+        .suggestion-item.active {
+            background-color: #e8f5e8;
+        }
+        
+        .suggestion-item:last-child {
+            border-bottom: none;
+        }
+        
+        .building-name {
+            font-weight: bold;
+            color: #28a745;
+        }
+        
+        .building-details {
+            font-size: 12px;
+            color: #6c757d;
+            margin-top: 2px;
+        }
+        
+        .map-container {
+            position: relative;
+            border: 3px solid #28a745;
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+        
+        #map {
+            height: 450px;
+            width: 100%;
+        }
+        
+        .map-controls {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        
+        .map-btn {
+            background: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        
+        .map-btn:hover {
+            background: #f8f9fa;
+            transform: scale(1.05);
+        }
+        
+        .coordinates-info {
+            background: linear-gradient(135deg, #e8f5e8, #d4edda);
+            border: 1px solid #28a745;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        
+        .coordinates-display {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+        }
+        
+        .selected-location {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 15px;
+            display: none;
+        }
+        
+        .form-section {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+            border: 1px solid #e9ecef;
+        }
+        
+        .section-title {
+            color: #28a745;
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .leaflet-popup-content {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.4;
+        }
+        
+        .building-popup {
+            text-align: center;
+        }
+        
+        .building-popup .name {
+            font-weight: bold;
+            color: #28a745;
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+        
+        .building-popup .coords {
+            font-size: 11px;
+            color: #666;
+            font-family: monospace;
+        }
+        
+        .required::after {
+            content: " *";
+            color: #dc3545;
+        }
+        
+        .form-control:invalid {
+            border-color: #dc3545;
+        }
+        
+        .form-control:valid {
+            border-color: #28a745;
+        }
+        
+        .error-message {
+            color: #dc3545;
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+        }
+            .coordinates-display {
+                flex-direction: column;
+                gap: 5px;
+            }
+            
+            .map-controls {
+                position: relative;
+                top: auto;
+                right: auto;
+                flex-direction: row;
+                justify-content: center;
+                margin: 10px 0;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <h1 class="text-success text-center mb-4">
+                <i class="fas fa-map-marked-alt me-2"></i>
+                Créer une Nouvelle Localisation
+            </h1>
+
+            {{ form_start(form, {'attr': {'novalidate': 'novalidate', 'id': 'localisation-form'}}) }}
+            
+            <!-- Section de recherche -->
+            <div class="form-section">
+                <div class="section-title">
+                    <i class="fas fa-search"></i>
+                    Rechercher un Bâtiment
+                </div>
+                
+                <div class="search-container">
+                    <input type="text" 
+                           id="building-search" 
+                           class="search-input" 
+                           placeholder="Tapez le nom d'un bâtiment de l'Université Gamal Abdel Nasser..."
+                           autocomplete="off">
+                    <i class="fas fa-search search-icon"></i>
+                    <div id="suggestions" class="suggestions-dropdown"></div>
+                </div>
+                
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>Astuce :</strong> Tous les champs marqués d'un astérisque (<span class="text-danger">*</span>) sont obligatoires. 
+                    Cliquez sur un bâtiment dans la liste ou sur la carte pour remplir automatiquement les coordonnées.
+                </div>
+                
+                <div id="selected-location" class="selected-location">
+                    <strong>Bâtiment sélectionné :</strong>
+                    <span id="selected-name"></span>
+                </div>
+            </div>
+
+            <!-- Section carte -->
+            <div class="form-section">
+                <div class="section-title">
+                    <i class="fas fa-map"></i>
+                    Localisation sur la Carte
+                </div>
+                
+                <div class="map-container">
+                    <div id="map"></div>
+                    <div class="map-controls">
+                        <button type="button" class="map-btn" id="reset-map" title="Réinitialiser la vue">
+                            <i class="fas fa-home"></i>
+                        </button>
+                        <button type="button" class="map-btn" id="clear-marker" title="Supprimer le marqueur">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                        <button type="button" class="map-btn" id="locate-me" title="Ma position">
+                            <i class="fas fa-crosshairs"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="coordinates-info">
+                    <div class="coordinates-display">
+                        <span><strong>📍 Position sélectionnée:</strong></span>
+                        <span id="coords-display">Cliquez sur la carte pour sélectionner</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section formulaire -->
+            <div class="form-section">
+                <div class="section-title">
+                    <i class="fas fa-edit"></i>
+                    Informations de la Localisation
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        {{ form_row(form.nomBatiment, {
+                            'attr': {
+                                'required': 'required',
+                                'class': 'form-control'
+                            },
+                            'label_attr': {
+                                'class': 'form-label required'
+                            }
+                        }) }}
+                    </div>
+                    <div class="col-md-6">
+                        {{ form_row(form.codeLocal, {
+                            'attr': {
+                                'required': 'required',
+                                'class': 'form-control'
+                            },
+                            'label_attr': {
+                                'class': 'form-label required'
+                            }
+                        }) }}
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-4">
+                        {{ form_row(form.etage, {
+                            'attr': {
+                                'required': 'required',
+                                'class': 'form-control',
+                                'placeholder': 'Ex: RDC, 1er, 2ème...'
+                            },
+                            'label_attr': {
+                                'class': 'form-label required'
+                            }
+                        }) }}
+                    </div>
+                    <div class="col-md-4">
+                        {{ form_row(form.salle, {
+                            'attr': {
+                                'required': 'required',
+                                'class': 'form-control'
+                            },
+                            'label_attr': {
+                                'class': 'form-label required'
+                            }
+                        }) }}
+                    </div>
+                    <div class="col-md-4">
+                        {{ form_row(form.responsable, {
+                            'attr': {
+                                'class': 'form-control'
+                            }
+                        }) }}
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        {{ form_row(form.latitude, {
+                            'attr': {
+                                'required': 'required',
+                                'readonly': 'readonly',
+                                'class': 'form-control',
+                                'step': 'any'
+                            },
+                            'label_attr': {
+                                'class': 'form-label required'
+                            }
+                        }) }}
+                    </div>
+                    <div class="col-md-6">
+                        {{ form_row(form.longitude, {
+                            'attr': {
+                                'required': 'required',
+                                'readonly': 'readonly',
+                                'class': 'form-control',
+                                'step': 'any'
+                            },
+                            'label_attr': {
+                                'class': 'form-label required'
+                            }
+                        }) }}
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-center">
+                <button type="submit" class="btn btn-success btn-lg me-3" id="submit-btn">
+                    <i class="fas fa-save me-2"></i>
+                    Enregistrer la Localisation
+                </button>
+                <a href="{{ path('app_localisation_index') }}" class="btn btn-outline-secondary btn-lg">
+                    <i class="fas fa-arrow-left me-2"></i>
+                    Retour à la liste
+                </a>
+            </div>
+            
+            {{ form_end(form) }}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script>
+        // Configuration de l'Université Gamal Abdel Nasser de Conakry
+        const universityCenter = [9.535, -13.680];
+        const buildingsData = [
+            {
+                name: "Rectorat - Bâtiment Principal",
+                coords: [9.5352, -13.6798],
+                description: "Administration centrale, Bureau du Recteur"
+            },
+            {
+                name: "Faculté de Médecine",
+                coords: [9.5348, -13.6805],
+                description: "École de médecine et sciences de la santé"
+            },
+            {
+                name: "Faculté des Sciences",
+                coords: [9.5355, -13.6792],
+                description: "Mathématiques, Physique, Chimie, Biologie"
+            },
+            {
+                name: "Faculté des Lettres et Sciences Humaines",
+                coords: [9.5358, -13.6785],
+                description: "Littérature, Histoire, Géographie, Philosophie"
+            },
+            {
+                name: "École Polytechnique",
+                coords: [9.5342, -13.6812],
+                description: "Génie Civil, Électrique, Mécanique, Informatique"
+            },
+            {
+                name: "Faculté des Sciences Économiques",
+                coords: [9.5361, -13.6778],
+                description: "Économie, Gestion, Commerce"
+            },
+            {
+                name: "Faculté de Droit",
+                coords: [9.5365, -13.6775],
+                description: "Sciences juridiques et politiques"
+            },
+            {
+                name: "Bibliothèque Universitaire",
+                coords: [9.5350, -13.6800],
+                description: "Centre de documentation et d'information"
+            },
+            {
+                name: "Restaurant Universitaire",
+                coords: [9.5345, -13.6808],
+                description: "Cafétéria et services de restauration"
+            },
+            {
+                name: "Cité Universitaire - Résidence A",
+                coords: [9.5338, -13.6815],
+                description: "Logements étudiants - Bâtiment A"
+            },
+            {
+                name: "Cité Universitaire - Résidence B",
+                coords: [9.5335, -13.6818],
+                description: "Logements étudiants - Bâtiment B"
+            },
+            {
+                name: "Centre Médical Universitaire",
+                coords: [9.5368, -13.6772],
+                description: "Infirmerie et services de santé"
+            },
+            {
+                name: "Amphithéâtre Central",
+                coords: [9.5353, -13.6795],
+                description: "Grand amphithéâtre - 500 places"
+            },
+            {
+                name: "Laboratoires de Recherche",
+                coords: [9.5346, -13.6802],
+                description: "Laboratoires multidisciplinaires"
+            },
+            {
+                name: "Centre Informatique",
+                coords: [9.5356, -13.6788],
+                description: "Salles informatiques et réseau"
+            }
+        ];
+
+        // Initialisation de la carte
+        const map = L.map('map', {
+            center: universityCenter,
+            zoom: 17,
+            zoomControl: false
+        });
+
+        // Ajout des contrôles de zoom personnalisés
+        L.control.zoom({
+            position: 'bottomleft'
+        }).addTo(map);
+
+        // Couche de tuiles
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 20,
+            attribution: '&copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors'
+        }).addTo(map);
+
+        // Variables globales
+        let currentMarker = null;
+        let buildingMarkers = [];
+        let selectedBuilding = null;
+
+        // Fonction pour créer les marqueurs des bâtiments
+        function createBuildingMarkers() {
+            buildingsData.forEach((building, index) => {
+                const marker = L.marker(building.coords, {
+                    icon: L.divIcon({
+                        className: 'building-marker',
+                        html: `<div style="background: #28a745; color: white; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3);">${index + 1}</div>`,
+                        iconSize: [24, 24],
+                        iconAnchor: [12, 12]
+                    })
+                }).addTo(map);
+
+                marker.bindPopup(`
+                    <div class="building-popup">
+                        <div class="name">${building.name}</div>
+                        <div style="font-size: 12px; margin: 5px 0;">${building.description}</div>
+                        <div class="coords">${building.coords[0].toFixed(6)}, ${building.coords[1].toFixed(6)}</div>
+                        <button onclick="selectBuilding('${building.name}', ${building.coords[0]}, ${building.coords[1]})" 
+                                style="background: #28a745; color: white; border: none; padding: 4px 8px; border-radius: 4px; font-size: 11px; margin-top: 5px; cursor: pointer;">
+                            Sélectionner ce bâtiment
+                        </button>
+                    </div>
+                `);
+
+                buildingMarkers.push(marker);
+            });
+        }
+
+        // Fonction pour sélectionner un bâtiment
+        window.selectBuilding = function(name, lat, lng) {
+            setMarkerPosition(lat, lng);
+            document.getElementById('localisation_nomBatiment').value = name;
+            
+            // Proposer un étage par défaut si non renseigné
+            const etageField = document.getElementById('localisation_etage');
+            if (!etageField.value) {
+                etageField.value = 'RDC'; // Valeur par défaut
+            }
+            
+            selectedBuilding = { name, lat, lng };
+            
+            // Afficher les informations du bâtiment sélectionné
+            document.getElementById('selected-name').textContent = name;
+            document.getElementById('selected-location').style.display = 'block';
+            
+            map.closePopup();
+        };
+
+        // Fonction pour définir la position du marqueur
+        function setMarkerPosition(lat, lng) {
+            if (currentMarker) {
+                currentMarker.setLatLng([lat, lng]);
+            } else {
+                currentMarker = L.marker([lat, lng], {
+                    icon: L.divIcon({
+                        className: 'current-location-marker',
+                        html: '<div style="background: #dc3545; color: white; border-radius: 50%; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; font-size: 16px; border: 3px solid white; box-shadow: 0 3px 6px rgba(0,0,0,0.4);"><i class="fas fa-map-marker-alt"></i></div>',
+                        iconSize: [32, 32],
+                        iconAnchor: [16, 16]
+                    })
+                }).addTo(map);
+            }
+
+            // Mettre à jour les champs du formulaire
+            document.getElementById('localisation_latitude').value = lat.toFixed(6);
+            document.getElementById('localisation_longitude').value = lng.toFixed(6);
+            
+            // Mettre à jour l'affichage des coordonnées
+            updateCoordinatesDisplay(lat, lng);
+        }
+
+        // Fonction pour mettre à jour l'affichage des coordonnées
+        function updateCoordinatesDisplay(lat, lng) {
+            const display = document.getElementById('coords-display');
+            display.innerHTML = `<strong>Lat:</strong> ${lat.toFixed(6)} | <strong>Lng:</strong> ${lng.toFixed(6)}`;
+        }
+
+        // Gestionnaire de clic sur la carte
+        map.on('click', function(e) {
+            const { lat, lng } = e.latlng;
+            setMarkerPosition(lat, lng);
+            
+            // Réinitialiser la sélection de bâtiment si on clique ailleurs
+            selectedBuilding = null;
+            document.getElementById('selected-location').style.display = 'none';
+        });
+
+        // Fonctionnalité de recherche
+        const searchInput = document.getElementById('building-search');
+        const suggestionsDiv = document.getElementById('suggestions');
+
+        searchInput.addEventListener('input', function() {
+            const query = this.value.toLowerCase();
+            
+            if (query.length < 2) {
+                suggestionsDiv.style.display = 'none';
+                return;
+            }
+
+            const matches = buildingsData.filter(building => 
+                building.name.toLowerCase().includes(query) ||
+                building.description.toLowerCase().includes(query)
+            );
+
+            if (matches.length > 0) {
+                suggestionsDiv.innerHTML = matches.map(building => `
+                    <div class="suggestion-item" data-name="${building.name}" data-lat="${building.coords[0]}" data-lng="${building.coords[1]}">
+                        <div class="building-name">${building.name}</div>
+                        <div class="building-details">${building.description}</div>
+                    </div>
+                `).join('');
+                suggestionsDiv.style.display = 'block';
+            } else {
+                suggestionsDiv.style.display = 'none';
+            }
+        });
+
+        // Gestionnaire pour les suggestions
+        suggestionsDiv.addEventListener('click', function(e) {
+            const item = e.target.closest('.suggestion-item');
+            if (item) {
+                const name = item.dataset.name;
+                const lat = parseFloat(item.dataset.lat);
+                const lng = parseFloat(item.dataset.lng);
+                
+                searchInput.value = name;
+                suggestionsDiv.style.display = 'none';
+                
+                // Centrer la carte et sélectionner le bâtiment
+                map.setView([lat, lng], 19);
+                selectBuilding(name, lat, lng);
+            }
+        });
+
+        // Fermer les suggestions en cliquant ailleurs
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.search-container')) {
+                suggestionsDiv.style.display = 'none';
+            }
+        });
+
+        // Contrôles de la carte
+        document.getElementById('reset-map').addEventListener('click', function() {
+            map.setView(universityCenter, 17);
+        });
+
+        document.getElementById('clear-marker').addEventListener('click', function() {
+            if (currentMarker) {
+                map.removeLayer(currentMarker);
+                currentMarker = null;
+                document.getElementById('localisation_latitude').value = '';
+                document.getElementById('localisation_longitude').value = '';
+                document.getElementById('coords-display').textContent = 'Cliquez sur la carte pour sélectionner';
+                document.getElementById('selected-location').style.display = 'none';
+                selectedBuilding = null;
+            }
+        });
+
+        document.getElementById('locate-me').addEventListener('click', function() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    function(position) {
+                        const lat = position.coords.latitude;
+                        const lng = position.coords.longitude;
+                        map.setView([lat, lng], 19);
+                        setMarkerPosition(lat, lng);
+                    },
+                    function(error) {
+                        alert('Impossible d\'obtenir votre position: ' + error.message);
+                    }
+                );
+            } else {
+                alert('La géolocalisation n\'est pas supportée par ce navigateur.');
+            }
+        });
+
+        // Navigation au clavier pour les suggestions
+        let selectedSuggestionIndex = -1;
+        searchInput.addEventListener('keydown', function(e) {
+            const suggestions = suggestionsDiv.querySelectorAll('.suggestion-item');
+            
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                selectedSuggestionIndex = Math.min(selectedSuggestionIndex + 1, suggestions.length - 1);
+                updateSelectedSuggestion(suggestions);
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                selectedSuggestionIndex = Math.max(selectedSuggestionIndex - 1, -1);
+                updateSelectedSuggestion(suggestions);
+            } else if (e.key === 'Enter' && selectedSuggestionIndex >= 0) {
+                e.preventDefault();
+                suggestions[selectedSuggestionIndex].click();
+            } else if (e.key === 'Escape') {
+                suggestionsDiv.style.display = 'none';
+                selectedSuggestionIndex = -1;
+            }
+        });
+
+        function updateSelectedSuggestion(suggestions) {
+            suggestions.forEach((item, index) => {
+                item.classList.toggle('active', index === selectedSuggestionIndex);
+            });
+        }
+
+        // Initialiser les marqueurs des bâtiments
+        createBuildingMarkers();
+
+        // Validation du formulaire avant soumission
+        document.getElementById('localisation-form').addEventListener('submit', function(e) {
+            const requiredFields = {
+                'localisation_nomBatiment': 'Nom du bâtiment',
+                'localisation_etage': 'Étage',
+                'localisation_salle': 'Salle',
+                'localisation_codeLocal': 'Code local',
+                'localisation_latitude': 'Latitude',
+                'localisation_longitude': 'Longitude'
+            };
+            
+            let hasErrors = false;
+            const errors = [];
+            
+            // Supprimer les anciens messages d'erreur
+            document.querySelectorAll('.error-message').forEach(el => el.remove());
+            
+            // Vérifier chaque champ requis
+            for (const [fieldId, fieldName] of Object.entries(requiredFields)) {
+                const field = document.getElementById(fieldId);
+                if (!field || !field.value.trim()) {
+                    hasErrors = true;
+                    errors.push(`Le champ "${fieldName}" est obligatoire`);
+                    
+                    if (field) {
+                        field.classList.add('is-invalid');
+                        const errorDiv = document.createElement('div');
+                        errorDiv.className = 'error-message';
+                        errorDiv.textContent = `${fieldName} est obligatoire`;
+                        field.parentNode.appendChild(errorDiv);
+                    }
+                } else {
+                    if (field) {
+                        field.classList.remove('is-invalid');
+                        field.classList.add('is-valid');
+                    }
+                }
+            }
+            
+            // Validation spécifique des coordonnées
+            const lat = document.getElementById('localisation_latitude').value;
+            const lng = document.getElementById('localisation_longitude').value;
+            
+            if (lat && (parseFloat(lat) < -90 || parseFloat(lat) > 90)) {
+                hasErrors = true;
+                errors.push('La latitude doit être comprise entre -90 et 90');
+            }
+            
+            if (lng && (parseFloat(lng) < -180 || parseFloat(lng) > 180)) {
+                hasErrors = true;
+                errors.push('La longitude doit être comprise entre -180 et 180');
+            }
+            
+            if (hasErrors) {
+                e.preventDefault();
+                
+                // Afficher les erreurs en haut du formulaire
+                let errorContainer = document.getElementById('error-container');
+                if (!errorContainer) {
+                    errorContainer = document.createElement('div');
+                    errorContainer.id = 'error-container';
+                    errorContainer.className = 'alert alert-danger';
+                    document.querySelector('.container .row .col-lg-10').insertBefore(errorContainer, document.querySelector('.form-section'));
+                }
+                
+                errorContainer.innerHTML = `
+                    <h5><i class="fas fa-exclamation-triangle me-2"></i>Erreurs de validation :</h5>
+                    <ul class="mb-0">
+                        ${errors.map(error => `<li>${error}</li>`).join('')}
+                    </ul>
+                `;
+                
+                // Scroll vers le haut pour voir les erreurs
+                errorContainer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                
+                return false;
+            } else {
+                // Supprimer le conteneur d'erreurs s'il existe
+                const errorContainer = document.getElementById('error-container');
+                if (errorContainer) {
+                    errorContainer.remove();
+                }
+            }
+        });
+
+        // Pré-remplir si des coordonnées existent déjà
+        const latInput = document.getElementById('localisation_latitude');
+        const lngInput = document.getElementById('localisation_longitude');
+        
+        if (latInput.value && lngInput.value) {
+            const lat = parseFloat(latInput.value);
+            const lng = parseFloat(lngInput.value);
+            setMarkerPosition(lat, lng);
+            map.setView([lat, lng], 19);
+        }
+    </script>
+{% endblock %}

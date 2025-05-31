@@ -1,0 +1,33 @@
+{# templates/historique/show.html.twig #}
+{% extends 'base.html.twig' %}
+
+{% block title %}Détails de l'Historique{% endblock %}
+
+{% block body %}
+<div class="container mt-5">
+    <h1 class="mb-4 text-center text-info">Détails de l'Historique</h1>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <ul class="list-group list-group-flush">
+                <li class="list-group-item"><strong>Équipement :</strong> {{ historique.equipement ? historique.equipement.id : 'Non renseigné' }}</li>
+                <li class="list-group-item"><strong>Date de l'Événement :</strong> {{ historique.dateEvenement ? historique.dateEvenement|date('d/m/Y H:i') : '-' }}</li>
+                <li class="list-group-item"><strong>Type d'Événement :</strong> {{ historique.typeEvenement }}</li>
+                <li class="list-group-item"><strong>Ancienne Valeur :</strong> {{ historique.ancienneValeur|raw }}</li>
+                <li class="list-group-item"><strong>Nouvelle Valeur :</strong> {{ historique.nouvelleValeur|raw }}</li>
+                <li class="list-group-item"><strong>Utilisateur :</strong> {{ historique.utilisateurAction }}</li>
+                <li class="list-group-item"><strong>Commentaire :</strong> {{ historique.commentaire|raw }}</li>
+            </ul>
+
+            <div class="d-flex justify-content-center gap-3 mt-4">
+                <a href="{{ path('app_historique_edit', {'id': historique.id}) }}" class="btn btn-outline-secondary">Modifier</a>
+                {% include 'historique/_delete_form.html.twig' %}
+            </div>
+
+            <div class="mt-3 text-center">
+                <a href="{{ path('app_historique_index') }}" class="btn btn-secondary">Retour à la liste</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
