@@ -29,8 +29,6 @@ class Localisation
     #[ORM\Column(length: 100)]
     private ?string $codeLocal = null;
 
-    // #[ORM\Column(length: 255)]
-    // private ?string $nom = null;
 
     #[ORM\Column(length: 100)]
     private ?string $responsable = null;
@@ -43,10 +41,6 @@ class Localisation
 
     #[ORM\Column(type: 'float', nullable: true)]
     private ?float $longitude = null;
-
-    #[ORM\ManyToOne(inversedBy: 'localisations')]
-    #[ORM\JoinColumn(nullable: true)] // ou false selon ton besoin
-    private ?Batiment $batiment = null;
 
     public function __construct()
     {
@@ -68,18 +62,6 @@ class Localisation
         $this->nomBatiment = $nomBatiment;
         return $this;
     }
-
-
-    // public function getNom(): ?string
-    // {
-    //     return $this->nom;
-    // }
-
-    // public function setNom(string $nom): static
-    // {
-    //     $this->nom = $nom;
-    //     return $this;
-    // }
 
     public function getEtage(): ?string
     {
@@ -178,20 +160,7 @@ class Localisation
 
     public function __toString(): string
     {
-        return $this->nomBatiment . ' - ' . $this->salle;
-        return $this->nom ?? 'Localisation';
+        return sprintf('%s - %s', $this->nomBatiment ?? 'Inconnu', $this->salle ?? 'Inconnu');
     }
-
-
-    public function getBatiment(): ?Batiment
-{
-    return $this->batiment;
-}
-
-public function setBatiment(?Batiment $batiment): self
-{
-    $this->batiment = $batiment;
-    return $this;
-}
 
 }

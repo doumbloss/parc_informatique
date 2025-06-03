@@ -38,12 +38,6 @@ class SearchType extends AbstractType
                 'choice_label' => 'nom',
                 'required' => false,
                 'placeholder' => 'Toutes localisations'
-            ])
-            ->add('batiment', EntityType::class, [
-                'class' => Batiment::class,
-                'choice_label' => 'nom',
-                'required' => false,
-                'placeholder' => 'Tous les bâtiments'
             ]);
     }
 

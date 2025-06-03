@@ -66,7 +66,6 @@ class LocalisationController extends AbstractController
             'responsable' => $localisation->getResponsable(),
             'latitude' => $localisation->getLatitude(),
             'longitude' => $localisation->getLongitude(),
-            'batiment' => $localisation->getBatiment()?->getNom(),
         ];
 
         if ($form->isSubmitted() && $form->isValid()) {
@@ -97,7 +96,7 @@ class LocalisationController extends AbstractController
                 'responsable' => $localisation->getResponsable(),
                 'latitude' => $localisation->getLatitude(),
                 'longitude' => $localisation->getLongitude(),
-                'batiment' => $localisation->getBatiment()?->getNom(),
+                 
             ], $user);
 
             $entityManager->remove($localisation);

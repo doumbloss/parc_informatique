@@ -15,8 +15,9 @@ class Panne
     private ?int $id = null;
     
 
+  
     #[ORM\Column(length: 100)]
-    private ?string $codeInventaire = null;
+    private ?string $codeInventaire =null;
 
     #[ORM\Column(type: 'datetime')]
     private ?\DateTimeInterface $dateSignalement = null;

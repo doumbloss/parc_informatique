@@ -1,22 +1,332 @@
-<h2>Équipements achetés au mois {{ mois }}</h2>
+{# templates/equipement/index_by_month.html.twig (ou fragment inclus) #}
+{% extends 'base.html.twig' %}
 
-<table>
-    <thead>
-        <tr>
-            <th>ID</th>
-            <th>Nom</th>
-            <th>Date d'achat</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for equipement in equipements %}
-            <tr>
-                <td>{{ equipement.id }}</td>
-                <td>{{ equipement.nom }}</td>
-                <td>{{ equipement.date_achat|date('d/m/Y') }}</td>
-            </tr>
-        {% else %}
-            <tr><td colspan="3">Aucun équipement pour ce mois.</td></tr>
-        {% endfor %}
-    </tbody>
-</table>
+{% block title %}Équipements achetés en {{ mois }} - UGANC{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --success-gradient: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+        }
+
+        body {
+            background: var(--primary-gradient);
+            min-height: 100vh;
+            padding: 2rem 0;
+        }
+
+        .list-container {
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: 20px;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.15);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .list-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 6px;
+            background: var(--primary-gradient);
+        }
+
+        .list-header {
+            text-align: center;
+            padding: 3rem 2rem 2rem;
+            position: relative;
+        }
+
+        .list-icon {
+            width: 80px;
+            height: 80px;
+            background: var(--primary-gradient);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+            color: white;
+            font-size: 2rem;
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-10px); }
+            60% { transform: translateY(-5px); }
+        }
+
+        .list-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #1a202c;
+            margin-bottom: 0.5rem;
+        }
+
+        .list-subtitle {
+            color: #64748b;
+            font-size: 1.1rem;
+            font-weight: 400;
+        }
+
+        .list-body {
+            padding: 0 3rem 3rem;
+        }
+
+        .equipement-grid {
+            display: grid;
+            gap: 1rem;
+        }
+
+        .equipement-card {
+            background: #f8fafc;
+            border-radius: 15px;
+            padding: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .equipement-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            background: #ffffff;
+        }
+
+        .equipement-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .equipement-info i {
+            font-size: 1.5rem;
+            color: #667eea;
+        }
+
+        .equipement-info div {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .equipement-info strong {
+            color: #1a202c;
+            font-weight: 600;
+        }
+
+        .equipement-info span {
+            color: #64748b;
+            font-size: 0.9rem;
+        }
+
+        .equipement-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .btn-action {
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .btn-action.view {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-action.view:hover {
+            background: #5a6cd8;
+            transform: scale(1.1);
+        }
+
+        .btn-action.edit {
+            background: #38a169;
+            color: white;
+        }
+
+        .btn-action.edit:hover {
+            background: #2f8555;
+            transform: scale(1.1);
+        }
+
+        .no-results {
+            text-align: center;
+            color: #64748b;
+            padding: 2rem;
+            font-size: 1.1rem;
+        }
+
+        .btn-secondary {
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 15px;
+            padding: 1rem 2.5rem;
+            font-weight: 500;
+            color: #64748b;
+            transition: all 0.3s ease;
+            min-width: 180px;
+            text-align: center;
+        }
+
+        .btn-secondary:hover {
+            border-color: #667eea;
+            color: #667eea;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.2);
+        }
+
+        .alert {
+            border-radius: 15px;
+            margin-bottom: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .list-container {
+                margin: 1rem;
+                border-radius: 15px;
+            }
+
+            .list-header {
+                padding: 2rem 1rem 1.5rem;
+            }
+
+            .list-body {
+                padding: 0 1.5rem 2rem;
+            }
+
+            .list-title {
+                font-size: 2rem;
+            }
+
+            .equipement-card {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+
+            .equipement-actions {
+                width: 100%;
+                justify-content: flex-end;
+            }
+        }
+
+        .fade-in {
+            animation: fadeInUp 0.6s ease forwards;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-lg-10 col-xl-8">
+            <div class="list-container fade-in">
+                <div class="list-header">
+                    <div class="list-icon">
+                        <i class="bi bi-list-ul"></i>
+                    </div>
+                    <h1 class="list-title">Équipements achetés en {{ mois }}</h1>
+                    <p class="list-subtitle">Liste des équipements acquis au cours du mois de {{ mois }}</p>
+                </div>
+
+                <div class="list-body">
+                    {# Afficher les messages flash #}
+                    {% for label, messages in app.flashes %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ label }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endfor %}
+                    {% endfor %}
+
+                    {# Liste des équipements #}
+                    <div class="equipement-grid">
+                        {% for equipement in equipements %}
+                            <a href="{{ path('app_equipement_show', {'id': equipement.id}) }}" class="equipement-card" aria-label="Voir les détails de {{ equipement.nom }}">
+                                <div class="equipement-info">
+                                    <i class="bi bi-tag"></i>
+                                    <div>
+                                        <strong>{{ equipement.nom }}</strong>
+                                        <span>ID: {{ equipement.id }} | Acheté le: {{ equipement.dateAchat|date('d/m/Y') }}</span>
+                                    </div>
+                                </div>
+                                <div class="equipement-actions">
+                                    <a href="{{ path('app_equipement_show', {'id': equipement.id}) }}" class="btn-action view" title="Voir les détails">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    <a href="{{ path('app_equipement_edit', {'id': equipement.id}) }}" class="btn-action edit" title="Modifier">
+                                        <i class="bi bi-pencil-square"></i>
+                                    </a>
+                                </div>
+                            </a>
+                        {% else %}
+                            <div class="no-results">
+                                <i class="bi bi-info-circle me-2"></i>
+                                Aucun équipement acheté pour le mois de {{ mois }}.
+                            </div>
+                        {% endfor %}
+                    </div>
+
+                    {# Bouton de retour #}
+                    <div class="mt-4 text-center">
+                        <a href="{{ path('app_equipement_index') }}" class="btn btn-secondary">
+                            <i class="bi bi-arrow-left me-2"></i>
+                            Retour à la liste complète
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Animation d'entrée
+    const listContainer = document.querySelector('.list-container');
+    listContainer.style.opacity = '0';
+    listContainer.style.transform = 'translateY(30px)';
+    
+    setTimeout(() => {
+        listContainer.style.transition = 'all 0.6s ease';
+        listContainer.style.opacity = '1';
+        listContainer.style.transform = 'translateY(0)';
+    }, 100);
+
+    // Animation des cartes au survol
+    const cards = document.querySelectorAll('.equipement-card');
+    cards.forEach(card => {
+        card.addEventListener('mouseenter', () => {
+            card.style.transition = 'all 0.3s ease';
+        });
+    });
+});
+</script>
+{% endblock %}

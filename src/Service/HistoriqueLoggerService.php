@@ -89,7 +89,6 @@ class HistoriqueLoggerService
             'responsable' => $localisation->getResponsable(),
             'latitude' => $localisation->getLatitude(),
             'longitude' => $localisation->getLongitude(),
-            'batiment' => $localisation->getBatiment()?->getNom(),
         ];
 
         if ($actionType === 'Modification' && $oldData) {

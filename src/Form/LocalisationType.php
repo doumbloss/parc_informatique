@@ -16,10 +16,6 @@ class LocalisationType extends AbstractType
      
     ->add('nomBatiment')
     ->add('etage')
-    // ->add('nom', TextType::class, [
-    //     'label' => 'Nom de la localisation',
-    //     'required' => true,
-    // ])
     ->add('salle')
     ->add('codeLocal')
     ->add('responsable')

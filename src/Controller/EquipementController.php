@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Entity\Equipement;
 use App\Entity\Panne;
 use App\Form\EquipementType;
+use App\Form\EquipementFiltreType;
 use App\Form\SearchType;
 use App\Service\HistoriqueLoggerService;
 use Doctrine\ORM\EntityManagerInterface;
@@ -91,11 +92,6 @@ class EquipementController extends AbstractController
             if (!empty($data['localisation'])) {
                 $queryBuilder->andWhere('e.localisation = :localisation')
                     ->setParameter('localisation', $data['localisation']);
-            }
-
-            if (!empty($data['batiment'])) {
-                $queryBuilder->andWhere('e.batiment = :batiment')
-                    ->setParameter('batiment', $data['batiment']);
             }
         }
 

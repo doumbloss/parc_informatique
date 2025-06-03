@@ -18,7 +18,7 @@ class UtilisateurType extends AbstractType
             ->add('email')
             ->add('telephone')
             ->add('role')
-            // ->add('relation')
+          
         ;
     }
 
