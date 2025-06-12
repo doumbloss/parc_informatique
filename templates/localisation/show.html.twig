@@ -1,0 +1,66 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Détails de la Localisation{% endblock %}
+
+{% block body %}
+<div class="container mt-5">
+    <h1 class="text-center text-info">Détails de la Localisation</h1>
+
+    <table class="table table-bordered mt-4">
+        <tbody>
+            <tr>
+                <th>Nom du bâtiment</th>
+                <td>{{ localisation.nomBatiment }}</td>
+            </tr>
+            <tr>
+                <th>Étage</th>
+                <td>{{ localisation.etage }}</td>
+            </tr>
+            <tr>
+                <th>Salle</th>
+                <td>{{ localisation.salle }}</td>
+            </tr>
+            <tr>
+                <th>Code Local</th>
+                <td>{{ localisation.codeLocal }}</td>
+            </tr>
+            <tr>
+                <th>Responsable</th>
+                <td>{{ localisation.responsable }}</td>
+            </tr>
+            <tr>
+                <th>Latitude</th>
+                <td>{{ localisation.latitude }}</td>
+            </tr>
+            <tr>
+                <th>Longitude</th>
+                <td>{{ localisation.longitude }}</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div id="map" style="height: 400px; margin-bottom: 20px;"></div>
+
+    <a href="{{ path('app_localisation_index') }}" class="btn btn-secondary">← Retour à la liste</a>
+    <a href="{{ path('app_localisation_edit', {'id': localisation.id}) }}" class="btn btn-warning">Modifier</a>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        const lat = {{ localisation.latitude|default(9.535) }};
+        const lng = {{ localisation.longitude|default(-13.680) }};
+
+        const map = L.map('map').setView([lat, lng], 16);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(map);
+
+        L.marker([lat, lng]).addTo(map)
+            .bindPopup("Position enregistrée")
+            .openPopup();
+    </script>
+{% endblock %}

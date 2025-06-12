@@ -1,0 +1,32 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Statistiques des historiques{% endblock %}
+
+{% block main_content %}
+    <div class="container mt-4">
+        <h1>Statistiques des historiques par mois</h1>
+
+        {% if stats is empty %}
+            <p>Aucune donnée trouvée.</p>
+        {% else %}
+            <table class="table table-bordered table-striped mt-3">
+                <thead>
+                    <tr>
+                        <th>Année</th>
+                        <th>Mois</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for stat in stats %}
+                        <tr>
+                            <td>{{ stat.year }}</td>
+                            <td>{{ stat.month }}</td>
+                            <td>{{ stat.total }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% endif %}
+    </div>
+{% endblock %}

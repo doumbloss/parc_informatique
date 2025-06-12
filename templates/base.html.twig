@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}UGANC - Gestion Parc Informatique{% endblock %}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Système de gestion du parc informatique de l'UGANC">
+
+    {# Bootstrap & Icons #}
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" integrity="sha512-z3gLpd7yknf1YoNbCzqRKc4qyor8gaKU1qmn+CShxbuBusANI9QpRohGBreCFkKxLhei6S9CQXFEbbKuqLg0DA==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="anonymous" />
+
+    {# Fonts #}
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary-color: #667eea;
+            --primary-dark: #5a67d8;
+            --secondary-color: #764ba2;
+            --sidebar-bg: #1a202c;
+            --sidebar-hover: #2d3748;
+            --content-bg: #f7fafc;
+            --text-primary: #2d3748;
+            --text-secondary: #718096;
+            --border-color: #e2e8f0;
+            --success-color: #48bb78;
+            --warning-color: #ed8936;
+            --danger-color: #f56565;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --transition: all 0.3s ease;
+        }
+
+        [data-theme="dark"] {
+            --sidebar-bg: #0d1219;
+            --sidebar-hover: #1f2937;
+            --content-bg: #1a202c;
+            --text-primary: #e2e8f0;
+            --text-secondary: #a0aec0;
+            --border-color: #4a5568;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            display: flex;
+            min-height: 100vh;
+            margin: 0;
+            background-color: var(--content-bg);
+            color: var(--text-primary);
+            line-height: 1.6;
+            transition: var(--transition);
+        }
+
+        /* Sidebar Styles */
+        .sidebar {
+            min-width: 280px;
+            max-width: 280px;
+            background: linear-gradient(180deg, var(--sidebar-bg) 0%, var(--sidebar-hover) 100%);
+            color: white;
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            padding: 0;
+            z-index: 1000;
+            box-shadow: var(--shadow-lg);
+            transition: transform 0.3s ease;
+        }
+
+        .sidebar.collapsed {
+            transform: translateX(-100%);
+        }
+
+        .sidebar-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(0, 0, 0, 0.1);
+        }
+
+        .sidebar-header h4 {
+            margin: 0;
+            font-weight: 600;
+            font-size: 1.25rem;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .sidebar-nav {
+            padding: 1rem 0;
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .sidebar .nav-link {
+            color: #e2e8f0;
+            padding: 0.75rem 1.5rem;
+            margin: 0.25rem 1rem;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            position: relative;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+        }
+
+        .sidebar .nav-link:hover {
+            background: var(--sidebar-hover);
+            color: white;
+            transform: translateX(5px);
+        }
+
+        .sidebar .nav-link.active {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .sidebar .nav-link.active::before {
+            content: '';
+            position: absolute;
+            left: -1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 4px;
+            height: 20px;
+            background: white;
+            border-radius: 2px;
+        }
+
+        .sidebar .nav-link i {
+            margin-right: 0.75rem;
+            font-size: 1.1rem;
+            width: 20px;
+            text-align: center;
+        }
+
+        .sidebar-footer {
+            padding: 1rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(0, 0, 0, 0.1);
+        }
+
+        /* Content Area */
+        .content {
+            margin-left: 280px;
+            padding: 0;
+            background-color: var(--content-bg);
+            flex-grow: 1;
+            width: calc(100% - 280px);
+            transition: margin-left 0.3s ease, width 0.3s ease;
+        }
+
+        .content.full-height {
+            height: auto; /* Supprime la hauteur fixe pour permettre le défilement */
+            overflow: auto; /* Active le défilement si nécessaire */
+        }
+
+        .content.expanded {
+            margin-left: 0;
+            width: 100%;
+        }
+
+        body.home-page .content {
+            margin-left: 0;
+            width: 100%;
+            padding: 0;
+        }
+
+        /* Top Navigation */
+        .top-nav {
+            background: var(--content-bg);
+            padding: 1rem 2rem;
+            box-shadow: var(--shadow);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 999;
+            border-bottom: 1px solid var(--border-color);
+            height: 60px; /* Hauteur fixe pour éviter les variations */
+        }
+
+        .mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: var(--text-primary);
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 8px;
+            transition: background-color 0.2s;
+        }
+
+        .mobile-menu-btn:hover {
+            background-color: var(--border-color);
+        }
+
+        .breadcrumb-nav {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .page-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin: 0;
+            color: var(--text-primary);
+        }
+
+        /* User Dropdown */
+        .user-dropdown .dropdown-toggle {
+            background: var(--content-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 0.5rem 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .user-dropdown .dropdown-toggle:hover {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .user-dropdown .dropdown-menu {
+            border: none;
+            box-shadow: var(--shadow-lg);
+            border-radius: 12px;
+            padding: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .user-dropdown .dropdown-item {
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .user-dropdown .dropdown-item:hover {
+            background: var(--border-color);
+        }
+
+        /* Main Content */
+        main.main-content {
+            padding: 2rem;
+            min-height: calc(100vh - 80px);
+            transition: var(--transition);
+        }
+
+        body.home-page main.main-content {
+            padding: 0;
+            min-height: 0; /* Supprime la hauteur minimale pour laisser le contenu naturel */
+            height: auto; /* Ajuste la hauteur au contenu */
+        }
+
+        /* Notifications */
+        .notification-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: var(--danger-color);
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            font-size: 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+        }
+
+        /* Overlay for mobile */
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+            transition: var(--transition);
+        }
+
+        .sidebar-overlay.show {
+            display: block;
+        }
+
+        /* Theme Toggle */
+        .theme-toggle {
+            background: none;
+            border: none;
+            color: var(--text-primary);
+            font-size: 1.25rem;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 8px;
+            transition: var(--transition);
+        }
+
+        .theme-toggle:hover {
+            background: var(--border-color);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1024px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            
+            .sidebar.show {
+                transform: translateX(0);
+            }
+            
+            .content {
+                margin-left: 0;
+                width: 100%;
+            }
+
+            .mobile-menu-btn {
+                display: block;
+            }
+
+            .top-nav {
+                padding: 1rem;
+            }
+
+            main.main-content {
+                padding: 1rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .page-title {
+                font-size: 1.25rem;
+            }
+
+            .breadcrumb-nav {
+                gap: 0.5rem;
+            }
+
+            .user-dropdown .dropdown-toggle {
+                padding: 0.5rem;
+            }
+        }
+
+        /* Animations */
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--border-color);
+            border-radius: 50%;
+            border-top-color: var(--primary-color);
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Status Indicators */
+        .status-online { color: var(--success-color); }
+        .status-offline { color: var(--text-secondary); }
+        .status-warning { color: var(--warning-color); }
+
+        /* Custom Scrollbar */
+        .sidebar-nav::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .sidebar-nav::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .sidebar-nav::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 3px;
+        }
+
+        .sidebar-nav::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.5);
+        }
+    </style>
+
+    {% block stylesheets %}{% endblock %}
+</head>
+<body class="{% if app.request.attributes.get('_route') == 'app_home' %}home-page{% endif %}">
+    {% if app.request.attributes.get('_route') != 'app_home' %}
+        <!-- Sidebar Overlay (Mobile) -->
+        <div class="sidebar-overlay" id="sidebarOverlay" aria-hidden="true"></div>
+
+        <!-- Sidebar -->
+        <nav class="sidebar d-flex flex-column" id="sidebar" aria-label="Navigation principale">
+            <div class="sidebar-header">
+                <h4 class="text-center">
+                    <i class="bi bi-pc-display me-2" aria-hidden="true"></i>
+                    CI DE L'UGANC
+                </h4>
+            </div>
+            
+            <div class="sidebar-nav">
+                <ul class="nav flex-column">
+                    <li class="nav-item">
+                        <a href="{{ path('app_dashboard') }}" class="nav-link{% if app.request.attributes.get('_route') starts with 'app_dashboard' %} active{% endif %}" aria-current="{% if app.request.attributes.get('_route') starts with 'app_dashboard' %}page{% endif %}">
+                            <i class="bi bi-speedometer2" aria-hidden="true"></i>
+                            <span>Dashboard</span>
+                        </a>
+                    </li>
+                                        <li class="nav-item">
+                        <a href="{{ path('app_equipement_index') }}" class="nav-link{% if app.request.attributes.get('_route') starts with 'app_equipement' %} active{% endif %}" aria-current="{% if app.request.attributes.get('_route') starts with 'app_equipement' %}page{% endif %}">
+                            <i class="bi bi-cpu" aria-hidden="true"></i>
+                            <span>Équipements</span>
+                            {% if get_notification_count() > 0 %}
+                                <span class="notification-badge" aria-label="{{ get_notification_count() }} notifications">{{ get_notification_count() }}</span>
+                            {% endif %}
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{{ path('app_utilisateur_index') }}" class="nav-link{% if app.request.attributes.get('_route') starts with 'app_utilisateur' %} active{% endif %}" aria-current="{% if app.request.attributes.get('_route') starts with 'app_utilisateur' %}page{% endif %}">
+                            <i class="bi bi-people" aria-hidden="true"></i>
+                            <span>Utilisateurs</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{{ path('app_localisation_index') }}" class="nav-link{% if app.request.attributes.get('_route') starts with 'app_localisation' %} active{% endif %}" aria-current="{% if app.request.attributes.get('_route') starts with 'app_localisation' %}page{% endif %}">
+                            <i class="bi bi-geo-alt" aria-hidden="true"></i>
+                            <span>Localisation</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{{ path('app_licence_index') }}" class="nav-link{% if app.request.attributes.get('_route') starts with 'app_licence' %} active{% endif %}" aria-current="{% if app.request.attributes.get('_route') starts with 'app_licence' %}page{% endif %}">
+                            <i class="bi bi-file-earmark-text" aria-hidden="true"></i>
+                            <span>Licence</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{{ path('app_panne_index') }}" class="nav-link{% if app.request.attributes.get('_route') starts with 'app_panne' %} active{% endif %}" aria-current="{% if app.request.attributes.get('_route') starts with 'app_panne' %}page{% endif %}">
+                            <i class="bi bi-tools" aria-hidden="true"></i>
+                            <span>Panne</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+    <a href="{{ path('app_audit_logs') }}" class="nav-link{% if app.request.attributes.get('_route') starts with 'app_audit' %} active{% endif %}" aria-current="{% if app.request.attributes.get('_route') starts with 'app_audit' %}page{% endif %}">
+        <i class="bi bi-list-task" aria-hidden="true"></i>
+        <span>Historique</span>
+    </a>
+</li>
+            <div class="sidebar-footer">
+                {% if app.user %}
+                    <a href="{{ path('app_logout') }}" class="nav-link text-danger" aria-label="Déconnexion">
+                        <i class="bi bi-box-arrow-right" aria-hidden="true"></i>
+                        <span>Déconnexion</span>
+                    </a>
+                {% else %}
+                    <a href="{{ path('app_login') }}" class="nav-link text-info" aria-label="Connexion">
+                        <i class="bi bi-box-arrow-in-right" aria-hidden="true"></i>
+                        <span>Connexion</span>
+                    </a>
+                {% endif %}
+            </div>
+        </nav>
+    {% endif %}
+
+    <!-- Main Content -->
+    <div class="content {% if app.request.attributes.get('_route') == 'app_home' %}full-height{% endif %}" id="content">
+        <!-- Top Navigation -->
+        <nav class="top-nav" aria-label="Navigation supérieure">
+            <div class="breadcrumb-nav">
+                <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Ouvrir le menu latéral" aria-controls="sidebar">
+                    <i class="bi bi-list" aria-hidden="true"></i>
+                </button>
+                <h2 class="page-title">{% block page_title %}Bienvenue{% endblock %}</h2>
+            </div>
+
+            <div class="d-flex align-items-center gap-2">
+                <button class="theme-toggle" id="themeToggle" aria-label="Basculer entre thème clair et sombre">
+                    <i class="bi bi-moon-stars-fill" aria-hidden="true"></i>
+                </button>
+                {% if app.user %}
+                    <div class="user-dropdown dropdown">
+                        <button class="dropdown-toggle" type="button" id="userDropdown" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Menu utilisateur">
+                            <div class="d-flex align-items-center">
+                                <div class="status-online me-2">
+                                    <i class="bi bi-circle-fill" style="font-size: 0.5rem;" aria-hidden="true"></i>
+                                </div>
+                                <i class="bi bi-person-circle fs-5" aria-hidden="true"></i>
+                            </div>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                            <li>
+                                <a class="dropdown-item" href="{{ path('app_profile') }}"> 
+                                    <i class="bi bi-person" aria-hidden="true"></i>
+                                    <span>Mon Profil</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="#">
+                                    <i class="bi bi-gear" aria-hidden="true"></i>
+                                    <span>Préférences</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="#">
+                                    <i class="bi bi-question-circle" aria-hidden="true"></i>
+                                    <span>Aide</span>
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <a class="dropdown-item text-danger" href="{{ path('app_logout') }}">
+                                    <i class="bi bi-box-arrow-right" aria-hidden="true"></i>
+                                    <span>Déconnexion</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                {% endif %}
+            </div>
+        </nav>
+
+        <!-- Main Content Area -->
+        <main class="main-content fade-in" aria-label="Contenu principal">
+            {% block body %}{% endblock %}
+        </main>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin="anonymous"></script>
+    
+    <script>
+        (function () {
+            'use strict';
+
+            // Theme Toggle
+            const themeToggle = document.getElementById('themeToggle');
+            const html = document.documentElement;
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)');
+
+            function setTheme(theme) {
+                html.setAttribute('data-theme', theme);
+                localStorage.setItem('theme', theme);
+                themeToggle.querySelector('i').className = theme === 'dark' ? 'bi bi-sun-fill' : 'bi bi-moon-stars-fill';
+            }
+
+            const savedTheme = localStorage.getItem('theme') || (prefersDark.matches ? 'dark' : 'light');
+            setTheme(savedTheme);
+
+            themeToggle?.addEventListener('click', () => {
+                const currentTheme = html.getAttribute('data-theme');
+                setTheme(currentTheme === 'dark' ? 'light' : 'dark');
+            });
+
+            // Sidebar Functionality
+            const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+            const sidebar = document.getElementById('sidebar');
+            const sidebarOverlay = document.getElementById('sidebarOverlay');
+            const content = document.getElementById('content');
+
+            if (sidebar) {
+                function toggleSidebar() {
+                    sidebar.classList.toggle('show');
+                    sidebarOverlay.classList.toggle('show');
+                    content.classList.toggle('expanded');
+                    mobileMenuBtn.setAttribute('aria-expanded', sidebar.classList.contains('show'));
+                }
+
+                function closeSidebar() {
+                    sidebar.classList.remove('show');
+                    sidebarOverlay.classList.remove('show');
+                    content.classList.remove('expanded');
+                    mobileMenuBtn.setAttribute('aria-expanded', 'false');
+                }
+
+                mobileMenuBtn.addEventListener('click', toggleSidebar);
+                sidebarOverlay.addEventListener('click', closeSidebar);
+
+                window.addEventListener('resize', () => {
+                    if (window.innerWidth > 1024) {
+                        closeSidebar();
+                    }
+                });
+
+                // Navigation Link Animation
+                document.querySelectorAll('.sidebar .nav-link').forEach(link => {
+                    link.addEventListener('click', function (e) {
+                        const icon = this.querySelector('i');
+                        if (icon) {
+                            const originalClass = icon.className;
+                            icon.className = 'loading-spinner';
+                            setTimeout(() => {
+                                icon.className = originalClass;
+                            }, 500);
+                        }
+                    });
+                });
+            }
+
+            // Notification System
+            window.showNotification = function (message, type = 'info') {
+                const notification = document.createElement('div');
+                notification.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+                notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+                notification.innerHTML = `
+                    ${message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Fermer"></button>
+                `;
+                document.body.appendChild(notification);
+                setTimeout(() => notification.remove(), 5000);
+            };
+
+            // Status Indicator
+            const statusIndicator = document.querySelector('.status-online i');
+            if (statusIndicator) {
+                setInterval(() => {
+                    statusIndicator.style.opacity = statusIndicator.style.opacity === '0.3' ? '1' : '0.3';
+                }, 2000);
+            }
+
+            // Smooth Scroll
+            document.documentElement.style.scrollBehavior = 'smooth';
+
+            // Keyboard Shortcuts
+            document.addEventListener('keydown', (e) => {
+                if ((e.ctrlKey || e.metaKey) && e.key === 'b' && sidebar) {
+                    e.preventDefault();
+                    toggleSidebar();
+                }
+                if (e.key === 'Escape' && sidebar) {
+                    closeSidebar();
+                }
+            });
+        })();
+    </script>
+    
+    {% block javascripts %}{% endblock %}
+</body>
+</html>

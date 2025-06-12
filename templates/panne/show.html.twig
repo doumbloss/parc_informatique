@@ -1,0 +1,33 @@
+{# templates/panne/show.html.twig #}
+{% extends 'base.html.twig' %}
+
+{% block title %}Détails de la Panne{% endblock %}
+
+{% block body %}
+<div class="container mt-5">
+    <h1 class="mb-4 text-center text-info">Détails de la Panne</h1>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <ul class="list-group list-group-flush">
+                <li class="list-group-item"><strong>Code Inventaire :</strong> {{ panne.codeInventaire }}</li>
+                <li class="list-group-item"><strong>Date Signalement :</strong> {{ panne.dateSignalement ? panne.dateSignalement|date('d/m/Y') : '-' }}</li> {# Correction ici #}
+                <li class="list-group-item"><strong>Description :</strong> {{ panne.description }}</li>
+                <li class="list-group-item"><strong>Statut :</strong> {{ panne.statut }}</li>
+                <li class="list-group-item"><strong>Date Résolution :</strong> {{ panne.dateResolution ? panne.dateResolution|date('d/m/Y') : '-' }}</li>
+                <li class="list-group-item"><strong>Type Intervention :</strong> {{ panne.typeIntervention }}</li>
+                <li class="list-group-item"><strong>Intervenant :</strong> {{ panne.intervenantId ? panne.intervenantId : '-' }}</li>
+            </ul>
+
+            <div class="d-flex justify-content-center gap-3 mt-4">
+                <a href="{{ path('app_panne_edit', {'id': panne.id}) }}" class="btn btn-outline-secondary">Modifier</a>
+                {% include 'panne/_delete_form.html.twig' %}
+            </div>
+
+            <div class="mt-3 text-center">
+                <a href="{{ path('app_panne_index') }}" class="btn btn-secondary">Retour à la liste</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

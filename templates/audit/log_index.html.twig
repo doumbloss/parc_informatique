@@ -1,0 +1,401 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Historique des Logs{% endblock %}
+
+{% block body %}
+<div class="container-fluid px-4 py-5">
+    <!-- En-tête avec statistiques -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="text-center mb-4 animate__animated animate__fadeInDown">
+                <h1 class="display-4 fw-bold text-gradient mb-2">Historique des Actions</h1>
+                <p class="lead text-muted">Suivi détaillé et analyse des activités système</p>
+            </div>
+            
+            <!-- Statistiques rapides -->
+            <div class="row g-3 mb-4">
+                <div class="col-md-3">
+                    <div class="stat-card bg-primary">
+                        <div class="stat-value">{{ logs|length }}</div>
+                        <div class="stat-label">Total Actions</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card bg-success">
+                        <div class="stat-value">{{ logs|filter(log => log.action|split('_')|first == 'CREATE')|length }}</div>
+                        <div class="stat-label">Créations</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card bg-warning">
+                        <div class="stat-value">{{ logs|filter(log => log.action|split('_')|first == 'UPDATE')|length }}</div>
+                        <div class="stat-label">Modifications</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card bg-danger">
+                        <div class="stat-value">{{ logs|filter(log => log.action|split('_')|first == 'DELETE')|length }}</div>
+                        <div class="stat-label">Suppressions</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtres optimisés -->
+    <div class="card border-0 shadow-sm mb-4 animate__animated animate__fadeInUp">
+        <div class="card-body p-4">
+            <div class="d-flex align-items-center mb-3">
+                <i class="bi bi-funnel text-primary me-2 fs-5"></i>
+                <h5 class="card-title mb-0">Filtres Avancés</h5>
+            </div>
+            
+            <form method="get" class="row g-3">
+                <div class="col-lg-3 col-md-6">
+                    <div class="form-floating">
+                        <input type="text" name="action" class="form-control" id="actionFilter" 
+                               placeholder="Action" value="{{ filters.action|default('') }}">
+                        <label for="actionFilter">Filtrer par action</label>
+                    </div>
+                </div>
+                <div class="col-lg-2 col-md-6">
+                    <div class="form-floating">
+                        <input type="date" name="from" class="form-control" id="fromDate" 
+                               value="{{ filters.from|default('') }}">
+                        <label for="fromDate">Date début</label>
+                    </div>
+                </div>
+                <div class="col-lg-2 col-md-6">
+                    <div class="form-floating">
+                        <input type="date" name="to" class="form-control" id="toDate" 
+                               value="{{ filters.to|default('') }}">
+                        <label for="toDate">Date fin</label>
+                    </div>
+                </div>
+                <div class="col-lg-2 col-md-6">
+                    <select name="user" class="form-select form-control" id="userFilter">
+                        <option value="">Tous les utilisateurs</option>
+                        {% set uniqueUsers = [] %}
+                        {% for log in logs %}
+                            {% if log.user and log.user.id not in uniqueUsers|map(u => u.id) %}
+                                {% set uniqueUsers = uniqueUsers|merge([log.user]) %}
+                            {% endif %}
+                        {% endfor %}
+                        {% for user in uniqueUsers %}
+                            <option value="{{ user.id }}" {{ filters.user|default('') == user.id ? 'selected' : '' }}>
+                                {{ user.email }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-lg-3 col-md-12">
+                    <div class="btn-group w-100" role="group">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-search me-1"></i>Filtrer
+                        </button>
+                        <a href="{{ path('app_audit_logs') }}" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-clockwise me-1"></i>Reset
+                        </a>
+                        <button type="button" class="btn btn-outline-primary" onclick="exportLogs()">
+                            <i class="bi bi-download me-1"></i>Export
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Tableau des logs modernisé -->
+    <div class="card border-0 shadow-sm animate__animated animate__fadeInUp" style="animation-delay: 0.2s;">
+        <div class="card-header bg-gradient border-0 py-3">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h5 class="text-white mb-0 fw-bold">
+                        <i class="bi bi-list-ul me-2"></i>Journal des Activités
+                    </h5>
+                </div>
+                <div class="col-auto">
+                    <span class="badge bg-white text-primary fw-semibold px-3 py-2">
+                        {{ logs|length }} enregistrement{{ logs|length > 1 ? 's' : '' }}
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        {% if logs is not empty %}
+            <div class="table-responsive">
+                <table class="table table-hover mb-0" id="logsTable">
+                    <thead class="table-light sticky-top">
+                        <tr>
+                            <th class="fw-semibold text-dark">
+                                <i class="bi bi-clock me-1"></i>Date & Heure
+                            </th>
+                            <th class="fw-semibold text-dark">
+                                <i class="bi bi-lightning me-1"></i>Action
+                            </th>
+                            <th class="fw-semibold text-dark">Description</th>
+                            <th class="fw-semibold text-dark">
+                                <i class="bi bi-person me-1"></i>Utilisateur
+                            </th>
+                            <th class="fw-semibold text-dark">Cible</th>
+                            <th class="fw-semibold text-dark">
+                                <i class="bi bi-geo-alt me-1"></i>IP
+                            </th>
+                            <th class="fw-semibold text-dark">Route</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log in logs %}
+                            {% set actionType = log.action|split('_')|first %}
+                            {% set actionClass = actionClasses[actionType] ?? 'secondary' %}
+                            {% set actionIcon = actionIcons[actionType] ?? 'gear' %}
+                            {% set actionLabel = {
+                                'CREATE': 'Création',
+        'UPDATE': 'Modification',
+        'DELETE': 'Suppression',
+        'LOGIN': 'Connexion',
+        'LOGOUT': 'Déconnexion',
+        'SENSITIVE': 'Action Sensible'
+    }[actionType] ?? log.action %}
+                            <tr class="animate__animated animate__fadeIn log-row" 
+                                style="animation-delay: {{ (loop.index0 * 0.05)|round(2) }}s;"
+                                data-bs-toggle="tooltip" 
+                                title="Cliquez pour plus de détails">
+                                
+                                <td class="text-nowrap">
+                                    <small class="text-muted d-block">{{ log.createdAt|date('d/m/Y') }}</small>
+                                    <strong>{{ log.createdAt|date('H:i:s') }}</strong>
+                                </td>
+                                
+                                <td>
+                                    <span class="badge bg-{{ actionClass }} d-flex align-items-center">
+                                        <i class="bi bi-{{ actionIcon }} me-1"></i>
+                                        {{ actionLabel ~ ' ' ~ log.action|split('_')|slice(1)|join('_')|trim }}
+                                    </span>
+                                </td>
+                                
+                                <td>
+                                    <div class="text-truncate" style="max-width: 200px;" 
+                                         title="{{ log.description }}">
+                                        {{ log.description }}
+                                    </div>
+                                </td>
+                                
+                                <td>
+                                    {% if log.user %}
+                                        <div class="d-flex align-items-center">
+                                            <div class="avatar-sm bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2">
+                                                {{ log.user.email|first|upper }}
+                                            </div>
+                                            <div>
+                                                <div class="fw-medium">{{ log.user.email|split('@')|first }}</div>
+                                                <small class="text-muted">{{ log.user.email|split('@')|last }}</small>
+                                            </div>
+                                        </div>
+                                    {% else %}
+                                        <span class="text-muted fst-italic">
+                                            <i class="bi bi-person-x me-1"></i>Anonyme
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                
+                                <td>
+                                    <code class="bg-light px-2 py-1 rounded">
+                                        {{ log.targetId ?: '—' }}
+                                    </code>
+                                </td>
+                                
+                                <td>
+                                    <span class="font-monospace small">
+                                        {{ log.ipAddress ?: '—' }}
+                                    </span>
+                                </td>
+                                
+                                <td>
+                                    <code class="text-primary small">
+                                        {{ log.route|default('—')|replace({'app_': ''}) }}
+                                    </code>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="card-body text-center py-5">
+                <div class="empty-state">
+                    <i class="bi bi-inbox display-1 text-muted mb-3"></i>
+                    <h4 class="text-muted">Aucun log trouvé</h4>
+                    <p class="text-secondary">
+                        Aucune activité ne correspond aux critères de recherche.
+                        <br>Essayez d'ajuster les filtres ou attendez de nouvelles activités.
+                    </p>
+                    <a href="{{ path('app_audit_logs') }}" class="btn btn-outline-primary">
+                        <i class="bi bi-arrow-clockwise me-1"></i>Actualiser
+                    </a>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Modal pour détails complets -->
+<div class="modal fade" id="logDetailModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Détails de l'Action</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="modalContent">
+                <!-- Contenu dynamique -->
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        .text-gradient {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        
+        .bg-gradient {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .stat-card {
+            border-radius: 1rem;
+            padding: 1.5rem;
+            color: white;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
+        }
+        
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .stat-label {
+            font-size: 0.875rem;
+            opacity: 0.9;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .avatar-sm {
+            width: 32px;
+            height: 32px;
+            font-size: 0.75rem;
+        }
+        
+        .log-row {
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        
+        .log-row:hover {
+            background-color: rgba(102, 126, 234, 0.05);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        
+        .empty-state i {
+            opacity: 0.3;
+        }
+        
+        .form-floating > .form-control:focus ~ label,
+        .form-floating > .form-control:not(:placeholder-shown) ~ label {
+            color: #667eea;
+        }
+        
+        .table th {
+            border-top: none;
+            font-weight: 600;
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        @media (max-width: 768px) {
+            .stat-card {
+                margin-bottom: 1rem;
+            }
+            
+            .table-responsive {
+                font-size: 0.875rem;
+            }
+        }
+        
+        .sticky-top {
+            z-index: 10;
+        }
+    </style>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        // Initialisation des tooltips
+        document.addEventListener('DOMContentLoaded', function() {
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+        });
+        
+        // Fonction d'export (exemple)
+        function exportLogs() {
+            // Implémentation de l'export CSV/Excel
+            alert('Fonctionnalité d\'export à implémenter');
+        }
+        
+        // Gestion du clic sur les lignes pour afficher les détails
+        document.querySelectorAll('.log-row').forEach(row => {
+            row.addEventListener('click', function() {
+                // Afficher modal avec détails complets
+                // Implémentation à compléter selon vos besoins
+            });
+        });
+    </script>
+{% endblock %}
+
+{# Tableaux de mapping pour les actions #}
+{% set actionClasses = {
+    'CREATE': 'success',
+    'UPDATE': 'warning', 
+    'DELETE': 'danger',
+    'LOGIN': 'primary',
+    'LOGOUT': 'secondary',
+    'SENSITIVE': 'danger'
+} %}
+
+{% set actionIcons = {
+    'CREATE': 'plus-circle',
+    'UPDATE': 'pencil-square',
+    'DELETE': 'trash',
+    'LOGIN': 'box-arrow-in-right',
+    'LOGOUT': 'box-arrow-right',
+    'SENSITIVE': 'shield-exclamation'
+} %}

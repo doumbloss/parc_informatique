@@ -1,0 +1,53 @@
+{# templates/utilisateur/show.html.twig #}
+{% extends 'base.html.twig' %}
+
+{% block title %}Détail Utilisateur{% endblock %}
+
+{% block body %}
+    <div class="container mt-5">
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <h1 class="text-center mb-4">Détail de l'Utilisateur</h1>
+
+                <table class="table table-bordered">
+                    <tbody>
+                        <tr>
+                            <th>Id</th>
+                            <td>{{ utilisateur.id }}</td>
+                        </tr>
+                        <tr>
+                            <th>Nom</th>
+                            <td>{{ utilisateur.nom }}</td>
+                        </tr>
+                        <tr>
+                            <th>Fonction</th>
+                            <td>{{ utilisateur.fonction }}</td>
+                        </tr>
+                        <tr>
+                            <th>Service</th>
+                            <td>{{ utilisateur.service }}</td>
+                        </tr>
+                        <tr>
+                            <th>Email</th>
+                            <td>{{ utilisateur.email }}</td>
+                        </tr>
+                        <tr>
+                            <th>Téléphone</th>
+                            <td>{{ utilisateur.telephone }}</td>
+                        </tr>
+                        <tr>
+                            <th>Role</th>
+                            <td>{{ utilisateur.role }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="d-flex justify-content-between">
+                    <a href="{{ path('app_utilisateur_index') }}" class="btn btn-secondary">Retour</a>
+                    <a href="{{ path('app_utilisateur_edit', {'id': utilisateur.id}) }}" class="btn btn-primary">Modifier</a>
+                    {# {% include 'utilisateur/_delete_form.html.twig' with {'delete_form': delete_form} %} #}
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

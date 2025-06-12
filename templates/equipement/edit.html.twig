@@ -1,0 +1,409 @@
+{# templates/equipement/edit.html.twig #}
+{% extends 'base.html.twig' %}
+
+{% block title %}Modifier un Équipement - UGANC{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --success-gradient: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+        }
+
+        body {
+            background: var(--primary-gradient);
+            min-height: 100vh;
+            padding: 2rem 0;
+        }
+
+        .form-container {
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: 20px;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.15);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .form-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 6px;
+            background: var(--primary-gradient);
+        }
+
+        .form-header {
+            text-align: center;
+            padding: 3rem 2rem 2rem;
+            position: relative;
+        }
+
+        .form-icon {
+            width: 80px;
+            height: 80px;
+            background: var(--primary-gradient);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+            color: white;
+            font-size: 2rem;
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-10px); }
+            60% { transform: translateY(-5px); }
+        }
+
+        .form-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #1a202c;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-subtitle {
+            color: #64748b;
+            font-size: 1.1rem;
+            font-weight: 400;
+        }
+
+        .form-body {
+            padding: 0 3rem 3rem;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2.5rem;
+        }
+
+        .form-group {
+            position: relative;
+        }
+
+        .form-floating {
+            position: relative;
+            margin-bottom: 0;
+        }
+
+        .form-control, .form-select {
+            border: 2px solid #e2e8f0;
+            border-radius: 15px;
+            padding: 1.25rem 1rem 0.75rem;
+            font-size: 1rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background: rgba(255, 255, 255, 0.9);
+            height: auto;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+            transform: translateY(-2px);
+            background: white;
+        }
+
+        .form-floating > label {
+            color: #64748b;
+            font-weight: 500;
+            font-size: 0.9rem;
+            padding: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .form-floating > .form-control:focus ~ label,
+        .form-floating > .form-control:not(:placeholder-shown) ~ label,
+        .form-floating > .form-select ~ label {
+            transform: scale(0.85) translateY(-0.5rem) translateX(0.15rem);
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        .btn-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn-update {
+            background: var(--primary-gradient);
+            border: none;
+            border-radius: 50px;
+            padding: 1rem 3rem;
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: white;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+            position: relative;
+            overflow: hidden;
+            min-width: 200px;
+        }
+
+        .btn-update::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn-update:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 35px rgba(102, 126, 234, 0.5);
+            color: white;
+        }
+
+        .btn-update:hover::before {
+            left: 100%;
+        }
+
+        .btn-secondary {
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 15px;
+            padding: 1rem 2.5rem;
+            font-weight: 500;
+            color: #64748b;
+            transition: all 0.3s ease;
+            min-width: 180px;
+        }
+
+        .btn-secondary:hover {
+            border-color: #667eea;
+            color: #667eea;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.2);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #e3342f 0%, #cc1f1a 100%);
+            border: none;
+            border-radius: 50px;
+            padding: 1rem 2.5rem;
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: white;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 25px rgba(227, 52, 47, 0.4);
+            min-width: 180px;
+        }
+
+        .btn-danger:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 35px rgba(227, 52, 47, 0.5);
+        }
+
+        .field-icon {
+            position: absolute;
+            right: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #94a3b8;
+            font-size: 1.1rem;
+            z-index: 5;
+            transition: all 0.3s ease;
+        }
+
+        .form-floating:focus-within .field-icon {
+            color: #667eea;
+            transform: translateY(-50%) scale(1.1);
+        }
+
+        .alert {
+            border-radius: 15px;
+            margin-bottom: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .form-container {
+                margin: 1rem;
+                border-radius: 15px;
+            }
+
+            .form-header {
+                padding: 2rem 1rem 1.5rem;
+            }
+
+            .form-body {
+                padding: 0 1.5rem 2rem;
+            }
+
+            .form-title {
+                font-size: 2rem;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+            }
+
+            .btn-actions {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .btn-update, .btn-secondary, .btn-danger {
+                min-width: 100%;
+            }
+        }
+
+        .fade-in {
+            animation: fadeInUp 0.6s ease forwards;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-lg-10 col-xl-8">
+            <div class="form-container fade-in">
+                <div class="form-header">
+                    <div class="form-icon">
+                        <i class="bi bi-pencil-square"></i>
+                    </div>
+                    <h1 class="form-title">Modifier l'équipement</h1>
+                    <p class="form-subtitle">Mettez à jour les informations de l'équipement dans l'inventaire UGANC</p>
+                </div>
+
+                <div class="form-body">
+                    {# Afficher les messages flash #}
+                    {% for label, messages in app.flashes %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ label }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endfor %}
+                    {% endfor %}
+
+                    {# Formulaire de modification #}
+                    {{ form_start(form, {'attr': {'class': 'needs-validation', 'novalidate': true, 'id': 'equipmentForm'}}) }}
+                        <div class="form-grid">
+                            {% for field in form.children %}
+                                {% if field.vars.name != '_token' %}
+                                    <div class="form-group">
+                                        <div class="form-floating">
+                                            {% set fieldType = field.vars.block_prefixes[1] ?? 'text' %}
+                                            {{ form_widget(field, {
+                                                'attr': {
+                                                    'class': fieldType == 'choice' ? 'form-select' : 'form-control',
+                                                    'placeholder': field.vars.label
+                                                }
+                                            }) }}
+                                            <label for="{{ field.vars.id }}">{{ field.vars.label }}</label>
+                                            <i class="field-icon bi bi-{{ 
+                                                field.vars.name == 'nom' ? 'tag' : 
+                                                (field.vars.name == 'marque' ? 'building' :
+                                                (field.vars.name == 'modele' ? 'cpu' :
+                                                (field.vars.name == 'numeroSerie' ? 'hash' :
+                                                (field.vars.name == 'categorie' ? 'list' :
+                                                (field.vars.name == 'etat' ? 'activity' :
+                                                (field.vars.name == 'dateAchat' ? 'calendar' :
+                                                (field.vars.name == 'prix' ? 'currency-franc' :
+                                                (field.vars.name == 'garantieFin' ? 'calendar-check' :
+                                                (field.vars.name == 'localisation' ? 'geo-alt' :
+                                                (field.vars.name == 'utilisateur' ? 'person' : 'info-circle'))))))))))
+                                            }}"></i>
+                                        </div>
+                                        {{ form_help(field) }}
+                                        {{ form_errors(field) }}
+                                    </div>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+
+                        <div class="btn-actions">
+                            <button type="submit" class="btn btn-update">
+                                <i class="bi bi-check-circle me-2"></i>
+                                {{ button_label|default('Mettre à jour') }}
+                            </button>
+                            <a href="{{ path('app_equipement_index') }}" class="btn btn-secondary">
+                                <i class="bi bi-arrow-left me-2"></i>
+                                Retour à la liste
+                            </a>
+                            <form method="post" action="{{ path('app_equipement_delete', {'id': equipement.id}) }}" style="display:inline;" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer cet équipement ? Cette action est irréversible.');">
+                                <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ equipement.id) }}">
+                                <button type="submit" class="btn btn-danger">
+                                    <i class="bi bi-trash me-2"></i>
+                                    Supprimer
+                                </button>
+                            </form>
+                        </div>
+                    {{ form_end(form) }}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Animation d'entrée
+    const formContainer = document.querySelector('.form-container');
+    formContainer.style.opacity = '0';
+    formContainer.style.transform = 'translateY(30px)';
+    
+    setTimeout(() => {
+        formContainer.style.transition = 'all 0.6s ease';
+        formContainer.style.opacity = '1';
+        formContainer.style.transform = 'translateY(0)';
+    }, 100);
+
+    // Validation du formulaire de mise à jour
+    const form = document.getElementById('equipmentForm');
+    const submitBtn = document.querySelector('.btn-update');
+    
+    form.addEventListener('submit', function(e) {
+        submitBtn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Mise à jour en cours...';
+        submitBtn.disabled = true;
+    });
+
+    // Gestion du formulaire de suppression
+    const deleteForm = document.querySelector('form[method="post"][action^="/equipement/"]');
+    if (deleteForm) {
+        const deleteBtn = deleteForm.querySelector('button[type="submit"]');
+        deleteForm.addEventListener('submit', function(e) {
+            if (confirm('Êtes-vous sûr de vouloir supprimer cet équipement ? Cette action est irréversible.')) {
+                deleteBtn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Suppression en cours...';
+                deleteBtn.disabled = true;
+            } else {
+                e.preventDefault(); // Annule la soumission si "Annuler" est cliqué
+            }
+        });
+    }
+
+    // Focus automatique sur le premier champ
+    const firstInput = form.querySelector('.form-control, .form-select');
+    if (firstInput) {
+        setTimeout(() => firstInput.focus(), 500);
+    }
+});
+</script>
+{% endblock %}

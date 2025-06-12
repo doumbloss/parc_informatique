@@ -1,0 +1,16 @@
+{# templates/historique/new.html.twig #}
+{% extends 'base.html.twig' %}
+
+{% block title %}Créer un Historique{% endblock %}
+
+{% block main_content %}
+<div class="container mt-5">
+    <h1 class="mb-4 text-center text-success">Créer un Nouvel Historique</h1>
+
+    {% include 'historique/_form.html.twig' with {'button_label': 'Créer'} %}
+
+    <div class="text-center mt-3">
+        <a href="{{ path('app_historique_index') }}" class="btn btn-secondary">Retour à la liste</a>
+    </div>
+</div>
+{% endblock %}

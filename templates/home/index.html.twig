@@ -1,0 +1,16 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Accueil - UGANC{% endblock %}
+
+{% block page_title %}Bienvenue sur le système de gestion du parc informatique{% endblock %}
+
+{% block body %}
+<div class="text-center mt-5">
+    <h1 class="mb-4">Bienvenue sur la plateforme UGANC</h1>
+    <p class="lead">Ce système permet de gérer efficacement les équipements, bâtiments et utilisateurs informatiques de l'université.</p>
+    <hr class="my-4">
+    <a href="{{ path('app_dashboard') }}" class="btn btn-primary btn-lg mt-3">
+        <i class="bi bi-speedometer2"></i> Accéder au tableau de bord
+    </a>
+</div>
+{% endblock %}

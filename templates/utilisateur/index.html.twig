@@ -1,0 +1,615 @@
+{# templates/utilisateur/index.html.twig #}
+{% extends 'base.html.twig' %}
+
+{% block title %}Liste des Utilisateurs{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .page-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 3rem 0;
+            margin-bottom: 2rem;
+            border-radius: 0 0 20px 20px;
+        }
+        
+        .stats-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            padding: 1.5rem;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        
+        .stats-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+        
+        .search-section {
+            background: #f8f9fa;
+            padding: 2rem;
+            border-radius: 15px;
+            margin-bottom: 2rem;
+            border: 1px solid #e9ecef;
+        }
+        
+        .table-container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        
+        .custom-table {
+            margin-bottom: 0;
+        }
+        
+        .custom-table thead th {
+            background: linear-gradient(45deg, #28a745, #20c997);
+            color: white;
+            border: none;
+            padding: 1rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-size: 0.85rem;
+        }
+        
+        .custom-table tbody tr {
+            transition: all 0.3s ease;
+            border-bottom: 1px solid #f8f9fa;
+        }
+        
+        .custom-table tbody tr:hover {
+            background: linear-gradient(90deg, rgba(40, 167, 69, 0.05), rgba(32, 201, 151, 0.05));
+            transform: translateX(5px);
+        }
+        
+        .custom-table td {
+            padding: 1rem;
+            vertical-align: middle;
+            border: none;
+        }
+        
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #28a745, #20c997);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            margin: 0 auto;
+        }
+        
+        .role-badge {
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        .role-admin {
+            background: linear-gradient(45deg, #dc3545, #c82333);
+            color: white;
+        }
+        
+        .role-user {
+            background: linear-gradient(45deg, #007bff, #0056b3);
+            color: white;
+        }
+        
+        .role-manager {
+            background: linear-gradient(45deg, #ffc107, #e0a800);
+            color: black;
+        }
+        
+        .btn-action {
+            padding: 0.4rem 0.8rem;
+            margin: 0 0.2rem;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+        
+        .btn-action:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: #6c757d;
+        }
+        
+        .empty-state-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+        
+        .filters-active {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 0.5rem 1rem;
+            border-radius: 10px;
+            margin-bottom: 1rem;
+        }
+        
+        .table-pagination {
+            background: #f8f9fa;
+            padding: 1rem 2rem;
+            border-top: 1px solid #e9ecef;
+        }
+        
+        @media (max-width: 768px) {
+            .custom-table {
+                font-size: 0.85rem;
+            }
+            
+            .btn-action {
+                padding: 0.3rem 0.6rem;
+                font-size: 0.8rem;
+            }
+            
+            .user-avatar {
+                width: 30px;
+                height: 30px;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+<!-- Page Header -->
+<div class="page-header">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 class="mb-2 fw-bold">
+                    <i class="fas fa-users me-3"></i>
+                    Gestion des Utilisateurs
+                </h1>
+                <p class="mb-0 opacity-75">Administrez et gérez les comptes utilisateurs de votre système</p>
+            </div>
+            <div class="col-md-4 text-end">
+                <a href="{{ path('app_utilisateur_new') }}" class="btn btn-light btn-lg">
+                    <i class="fas fa-user-plus me-2"></i>
+                    Nouvel utilisateur
+                </a>
+            </div>
+        </div>
+        
+        <!-- Statistics Cards -->
+        <div class="row mt-4">
+            <div class="col-md-3 mb-3">
+                <div class="stats-card">
+                    <i class="fas fa-users fa-2x mb-2"></i>
+                    <h3>{{ utilisateurs|length }}</h3>
+                    <small>Total Utilisateurs</small>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="stats-card">
+                    <i class="fas fa-user-shield fa-2x mb-2"></i>
+                    <h3>
+                        {% set adminCount = 0 %}
+                        {% for user in utilisateurs %}
+                            {% if user.role == 'ROLE_ADMIN' %}
+                                {% set adminCount = adminCount + 1 %}
+                            {% endif %}
+                        {% endfor %}
+                        {{ adminCount }}
+                    </h3>
+                    <small>Administrateurs</small>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="stats-card">
+                    <i class="fas fa-user-tie fa-2x mb-2"></i>
+                    <h3>
+                        {% set managerCount = 0 %}
+                        {% for user in utilisateurs %}
+                            {% if user.role == 'ROLE_MANAGER' %}
+                                {% set managerCount = managerCount + 1 %}
+                            {% endif %}
+                        {% endfor %}
+                        {{ managerCount }}
+                    </h3>
+                    <small>Managers</small>
+                </div>
+            </div>
+            <div class="col-md-3 mb-3">
+                <div class="stats-card">
+                    <i class="fas fa-user fa-2x mb-2"></i>
+                    <h3>
+                        {% set userCount = 0 %}
+                        {% for user in utilisateurs %}
+                            {% if user.role == 'ROLE_USER' %}
+                                {% set userCount = userCount + 1 %}
+                            {% endif %}
+                        {% endfor %}
+                        {{ userCount }}
+                    </h3>
+                    <small>Utilisateurs</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <!-- Search and Filters Section -->
+    <div class="search-section">
+        <form method="GET" class="row g-3" id="searchForm">
+            <div class="col-md-4">
+                <label class="form-label fw-semibold">Rechercher</label>
+                <div class="input-group">
+                    <span class="input-group-text">
+                        <i class="fas fa-search"></i>
+                    </span>
+                    <input type="text" class="form-control" name="search" 
+                           placeholder="Nom, email, fonction..." 
+                           value="{{ app.request.get('search') }}">
+                </div>
+            </div>
+            
+            <div class="col-md-3">
+                <label class="form-label fw-semibold">Rôle</label>
+                <select class="form-select" name="role">
+                    <option value="">Tous les rôles</option>
+                    <option value="ROLE_ADMIN" {{ app.request.get('role') == 'ROLE_ADMIN' ? 'selected' : '' }}>Admin</option>
+                    <option value="ROLE_MANAGER" {{ app.request.get('role') == 'ROLE_MANAGER' ? 'selected' : '' }}>Manager</option>
+                    <option value="ROLE_USER" {{ app.request.get('role') == 'ROLE_USER' ? 'selected' : '' }}>Utilisateur</option>
+                </select>
+            </div>
+            
+            <div class="col-md-3">
+                <label class="form-label fw-semibold">Service</label>
+                <select class="form-select" name="service">
+                    <option value="">Tous les services</option>
+                    {% set services = [] %}
+                    {% for user in utilisateurs %}
+                        {% if user.service and user.service not in services %}
+                            {% set services = services|merge([user.service]) %}
+                        {% endif %}
+                    {% endfor %}
+                    {% for service in services %}
+                        <option value="{{ service }}" {{ app.request.get('service') == service ? 'selected' : '' }}>
+                            {{ service }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="col-md-2 d-flex align-items-end gap-2">
+                <button type="submit" class="btn btn-success flex-fill">
+                    <i class="fas fa-filter me-1"></i>
+                    Filtrer
+                </button>
+                <a href="{{ path('app_utilisateur_index') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-times"></i>
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Active Filters Indicator -->
+    {% if app.request.get('search') or app.request.get('role') or app.request.get('service') %}
+        <div class="filters-active">
+            <i class="fas fa-filter me-2"></i>
+            <strong>Filtres actifs:</strong>
+            {% if app.request.get('search') %}
+                <span class="badge bg-primary me-1">Recherche: "{{ app.request.get('search') }}"</span>
+            {% endif %}
+            {% if app.request.get('role') %}
+                <span class="badge bg-info me-1">Rôle: {{ app.request.get('role') }}</span>
+            {% endif %}
+            {% if app.request.get('service') %}
+                <span class="badge bg-warning me-1">Service: {{ app.request.get('service') }}</span>
+            {% endif %}
+        </div>
+    {% endif %}
+
+    <!-- Table Container -->
+    <div class="table-container">
+        {% if utilisateurs|length > 0 %}
+            <div class="table-responsive">
+                <table class="table custom-table">
+                    <thead>
+                        <tr>
+                            <th width="60">
+                                <input type="checkbox" id="selectAll" class="form-check-input">
+                            </th>
+                            <th width="80">Avatar</th>
+                            <th>Utilisateur</th>
+                            <th>Contact</th>
+                            <th>Fonction & Service</th>
+                            <th>Rôle</th>
+                            <th>Statut</th>
+                            <th width="200">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for utilisateur in utilisateurs %}
+                        <tr data-user-id="{{ utilisateur.id }}">
+                            <td>
+                                <input type="checkbox" class="form-check-input user-checkbox" 
+                                       value="{{ utilisateur.id }}">
+                            </td>
+                            <td>
+                                <div class="user-avatar">
+                                    {% if utilisateur.nom %}
+                                        {% set nameParts = utilisateur.nom|split(' ') %}
+                                        {% if nameParts|length > 1 %}
+                                            {{ nameParts[0]|first|upper }}{{ nameParts[nameParts|length - 1]|first|upper }}
+                                        {% else %}
+                                            {% set firstName = utilisateur.nom|slice(0, 1)|upper %}
+                                            {% set secondChar = utilisateur.nom|length > 1 ? utilisateur.nom|slice(1, 1)|upper : firstName %}
+                                            {{ firstName }}{{ secondChar }}
+                                        {% endif %}
+                                    {% else %}
+                                        ??
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td>
+                                <div>
+                                    <strong class="d-block">{{ utilisateur.nom }}</strong>
+                                    <small class="text-muted">ID: #{{ utilisateur.id }}</small>
+                                </div>
+                            </td>
+                            <td>
+                                <div>
+                                    <div class="d-flex align-items-center mb-1">
+                                        <i class="fas fa-envelope text-muted me-2"></i>
+                                        <a href="mailto:{{ utilisateur.email }}" class="text-decoration-none">
+                                            {{ utilisateur.email }}
+                                        </a>
+                                    </div>
+                                    {% if utilisateur.telephone %}
+                                        <div class="d-flex align-items-center">
+                                            <i class="fas fa-phone text-muted me-2"></i>
+                                            <a href="tel:{{ utilisateur.telephone }}" class="text-decoration-none">
+                                                {{ utilisateur.telephone }}
+                                            </a>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td>
+                                <div>
+                                    <strong class="d-block">{{ utilisateur.fonction }}</strong>
+                                    <small class="text-muted">{{ utilisateur.service }}</small>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="role-badge 
+                                    {% if utilisateur.role == 'ROLE_ADMIN' %}role-admin
+                                    {% elseif utilisateur.role == 'ROLE_MANAGER' %}role-manager
+                                    {% else %}role-user{% endif %}">
+                                    {% if utilisateur.role == 'ROLE_ADMIN' %}Admin
+                                    {% elseif utilisateur.role == 'ROLE_MANAGER' %}Manager
+                                    {% else %}User{% endif %}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge bg-success">
+                                    <i class="fas fa-circle me-1" style="font-size: 0.6rem;"></i>
+                                    Actif
+                                </span>
+                            </td>
+                            <td>
+                                <div class="d-flex flex-wrap gap-1">
+                                    <a href="{{ path('app_utilisateur_show', {'id': utilisateur.id}) }}" 
+                                       class="btn-action btn btn-outline-info btn-sm"
+                                       data-bs-toggle="tooltip" title="Voir les détails">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{{ path('app_utilisateur_edit', {'id': utilisateur.id}) }}" 
+                                       class="btn-action btn btn-outline-primary btn-sm"
+                                       data-bs-toggle="tooltip" title="Modifier">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <button class="btn-action btn btn-outline-warning btn-sm"
+                                            data-bs-toggle="tooltip" title="Réinitialiser le mot de passe">
+                                        <i class="fas fa-key"></i>
+                                    </button>
+                                    <button class="btn-action btn btn-outline-danger btn-sm"
+                                            data-bs-toggle="tooltip" title="Supprimer"
+                                            onclick="confirmDelete({{ utilisateur.id }}, '{{ utilisateur.nom }}')">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Table Footer with Bulk Actions -->
+            <div class="table-pagination">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <div class="d-flex align-items-center gap-3">
+                            <button class="btn btn-outline-primary btn-sm" id="bulkActions" disabled>
+                                <i class="fas fa-tasks me-1"></i>
+                                Actions groupées
+                            </button>
+                            <small class="text-muted">
+                                <span id="selectedCount">0</span> utilisateur(s) sélectionné(s)
+                            </small>
+                        </div>
+                    </div>
+                    <div class="col-md-6 text-end">
+                        <small class="text-muted">
+                            Affichage de {{ utilisateurs|length }} utilisateur(s)
+                        </small>
+                    </div>
+                </div>
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <div class="empty-state-icon">
+                    <i class="fas fa-users"></i>
+                </div>
+                <h3>Aucun utilisateur trouvé</h3>
+                <p class="text-muted mb-4">
+                    {% if app.request.get('search') or app.request.get('role') or app.request.get('service') %}
+                        Aucun utilisateur ne correspond à vos critères de recherche.
+                    {% else %}
+                        Commencez par créer votre premier utilisateur.
+                    {% endif %}
+                </p>
+                <a href="{{ path('app_utilisateur_new') }}" class="btn btn-success btn-lg">
+                    <i class="fas fa-user-plus me-2"></i>
+                    Créer le premier utilisateur
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Confirmer la suppression
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Êtes-vous sûr de vouloir supprimer l'utilisateur <strong id="deleteUserName"></strong> ?</p>
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Cette action est irréversible !
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <form method="POST" id="deleteForm" style="display: inline;">
+                    <input type="hidden" name="_token" id="deleteToken">
+                    <input type="hidden" name="id" value="">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash me-1"></i>
+                        Supprimer définitivement
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize tooltips
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+            
+            // Checkbox selection
+            const selectAllCheckbox = document.getElementById('selectAll');
+            const userCheckboxes = document.querySelectorAll('.user-checkbox');
+            const selectedCountSpan = document.getElementById('selectedCount');
+            const bulkActionsBtn = document.getElementById('bulkActions');
+            
+            // Select all functionality
+            if (selectAllCheckbox) {
+                selectAllCheckbox.addEventListener('change', function() {
+                    userCheckboxes.forEach(checkbox => {
+                        checkbox.checked = this.checked;
+                    });
+                    updateSelectedCount();
+                });
+            }
+            
+            // Individual checkbox change
+            userCheckboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', updateSelectedCount);
+            });
+            
+            function updateSelectedCount() {
+                const selectedCount = document.querySelectorAll('.user-checkbox:checked').length;
+                if (selectedCountSpan) selectedCountSpan.textContent = selectedCount;
+                if (bulkActionsBtn) bulkActionsBtn.disabled = selectedCount === 0;
+                
+                // Update select all checkbox state
+                if (selectAllCheckbox) {
+                    selectAllCheckbox.indeterminate = selectedCount > 0 && selectedCount < userCheckboxes.length;
+                    selectAllCheckbox.checked = selectedCount === userCheckboxes.length && selectedCount > 0;
+                }
+            }
+            
+            // Auto-submit search form on input
+            const searchInput = document.querySelector('input[name="search"]');
+            if (searchInput) {
+                let searchTimeout;
+                searchInput.addEventListener('input', function() {
+                    clearTimeout(searchTimeout);
+                    searchTimeout = setTimeout(() => {
+                        // Auto-submit after 1 second of no typing
+                        // Uncomment if you want auto-submit: document.getElementById('searchForm').submit();
+                    }, 1000);
+                });
+            }
+            
+            // Row hover effects
+            const tableRows = document.querySelectorAll('tbody tr');
+            tableRows.forEach(row => {
+                row.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateX(5px)';
+                });
+                
+                row.addEventListener('mouseleave', function() {
+                    this.style.transform = 'translateX(0)';
+                });
+            });
+        });
+        
+        // Delete confirmation
+            function confirmDelete(userId, userName) {
+                document.getElementById('deleteUserName').textContent = userName;
+                const deleteForm = document.getElementById('deleteForm');
+                const deleteToken = document.getElementById('deleteToken');
+                deleteToken.value = '{{ csrf_token('delete' ~ '') }}'.replace('', userId); // Remplace '' par userId
+                deleteForm.action = '{{ path('app_utilisateur_delete', {'id': '__ID__'}) }}'.replace('__ID__', userId);
+                deleteForm.querySelector('input[name="id"]').value = userId;
+                new bootstrap.Modal(document.getElementById('deleteModal')).show();
+            }
+        
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            // Ctrl+N for new user
+            if (e.ctrlKey && e.key === 'n') {
+                e.preventDefault();
+                window.location.href = "{{ path('app_utilisateur_new') }}";
+            }
+            
+            // Ctrl+F to focus search
+            if (e.ctrlKey && e.key === 'f') {
+                e.preventDefault();
+                document.querySelector('input[name="search"]').focus();
+            }
+        });
+    </script>
+{% endblock %}

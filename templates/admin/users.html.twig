@@ -1,0 +1,57 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Gestion des utilisateurs{% endblock %}
+
+{% block body %}
+<div class="container mt-5">
+    <h1>Gestion des utilisateurs</h1>
+
+    {% for message in app.flashes('success') %}
+        <div class="alert alert-success">{{ message }}</div>
+    {% endfor %}
+    {% for message in app.flashes('error') %}
+        <div class="alert alert-danger">{{ message }}</div>
+    {% endfor %}
+
+    <a href="{{ path('app_admin_add_admin') }}" class="btn btn-primary mb-3">Ajouter un administrateur</a>
+
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nom</th>
+                <th>Email</th>
+                <th>Rôles</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in users %}
+                <tr>
+                    <td>{{ user.id }}</td>
+                    <td>{{ user.getFullName() }}</td>
+                    <td>{{ user.email }}</td>
+                    <td>{{ user.roles|join(', ') }}</td>
+                    <td>
+                        {% if user.email != 'doumbouyadmin@gmail.com' %}
+                            <form method="post" action="{{ path('app_admin_delete_user', {'id': user.id}) }}" onsubmit="return confirm('Êtes-vous sûr de vouloir supprimer {{ user.getFullName() }} ?');" style="display:inline;">
+                                <input type="hidden" name="_token" value="{{ csrf_token('delete_user_' ~ user.id) }}">
+                                <button type="submit" class="btn btn-sm btn-danger">Supprimer</button>
+                            </form>
+                            <form method="post" action="{{ path('app_admin_toggle_role', {'id': user.id}) }}" style="display:inline;">
+                                <input type="hidden" name="_token" value="{{ csrf_token('toggle_role_' ~ user.id) }}">
+                                <input type="hidden" name="role" value="ROLE_ADMIN">
+                                <button type="submit" class="btn btn-sm {{ 'ROLE_ADMIN' in user.roles ? 'btn-warning' : 'btn-primary' }}">
+                                    {{ 'ROLE_ADMIN' in user.roles ? 'Retirer ADMIN' : 'Ajouter ADMIN' }}
+                                </button>
+                            </form>
+                        {% else %}
+                            <span class="text-muted">Admin initial (non modifiable)</span>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

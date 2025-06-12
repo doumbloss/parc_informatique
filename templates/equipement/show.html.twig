@@ -1,0 +1,454 @@
+{# templates/equipement/show.html.twig #}
+{% extends 'base.html.twig' %}
+
+{% block title %}Détails de l'Équipement - UGANC{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --success-gradient: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+        }
+
+        body {
+            background: var(--primary-gradient);
+            min-height: 100vh;
+            padding: 2rem 0;
+        }
+
+        .details-container {
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: 20px;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.15);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .details-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 6px;
+            background: var(--primary-gradient);
+        }
+
+        .details-header {
+            text-align: center;
+            padding: 3rem 2rem 2rem;
+            position: relative;
+        }
+
+        .details-icon {
+            width: 80px;
+            height: 80px;
+            background: var(--primary-gradient);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+            color: white;
+            font-size: 2rem;
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-10px); }
+            60% { transform: translateY(-5px); }
+        }
+
+        .details-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #1a202c;
+            margin-bottom: 0.5rem;
+        }
+
+        .details-subtitle {
+            color: #64748b;
+            font-size: 1.1rem;
+            font-weight: 400;
+        }
+
+        .details-body {
+            padding: 0 3rem 3rem;
+        }
+
+        .details-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2.5rem;
+        }
+
+        .details-item {
+            background: #f8fafc;
+            border-radius: 15px;
+            padding: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .details-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .details-item i {
+            font-size: 1.5rem;
+            color: #667eea;
+        }
+
+        .details-item strong {
+            color: #1a202c;
+            font-weight: 600;
+        }
+
+        .details-item span {
+            color: #64748b;
+        }
+
+        .btn-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn-edit {
+            background: var(--primary-gradient);
+            border: none;
+            border-radius: 50px;
+            padding: 1rem 3rem;
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: white;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+            position: relative;
+            overflow: hidden;
+            min-width: 200px;
+        }
+
+        .btn-edit::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn-edit:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 35px rgba(102, 126, 234, 0.5);
+            color: white;
+        }
+
+        .btn-edit:hover::before {
+            left: 100%;
+        }
+
+        .btn-secondary {
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 15px;
+            padding: 1rem 2.5rem;
+            font-weight: 500;
+            color: #64748b;
+            transition: all 0.3s ease;
+            min-width: 180px;
+        }
+
+        .btn-secondary:hover {
+            border-color: #667eea;
+            color: #667eea;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.2);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #e3342f 0%, #cc1f1a 100%);
+            border: none;
+            border-radius: 50px;
+            padding: 1rem 2.5rem;
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: white;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 25px rgba(227, 52, 47, 0.4);
+            min-width: 180px;
+        }
+
+        .btn-danger:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 35px rgba(227, 52, 47, 0.5);
+        }
+
+        .alert {
+            border-radius: 15px;
+            margin-bottom: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .details-container {
+                margin: 1rem;
+                border-radius: 15px;
+            }
+
+            .details-header {
+                padding: 2rem 1rem 1.5rem;
+            }
+
+            .details-body {
+                padding: 0 1.5rem 2rem;
+            }
+
+            .details-title {
+                font-size: 2rem;
+            }
+
+            .details-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            .btn-actions {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .btn-edit, .btn-secondary, .btn-danger {
+                min-width: 100%;
+            }
+        }
+
+        .fade-in {
+            animation: fadeInUp 0.6s ease forwards;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-lg-10 col-xl-8">
+            <div class="details-container fade-in">
+                <div class="details-header">
+                    <div class="details-icon">
+                        <i class="bi bi-info-circle"></i>
+                    </div>
+                    <h1 class="details-title">Détails de l'équipement</h1>
+                    <p class="details-subtitle">Informations détaillées sur l'équipement {{ equipement.nom }}</p>
+                </div>
+
+                <div class="details-body">
+                    {# Afficher les messages flash #}
+                    {% for label, messages in app.flashes %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ label }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endfor %}
+                    {% endfor %}
+
+                    {# Affichage des détails #}
+                    <div class="details-grid">
+                        <div class="details-item">
+                            <i class="bi bi-tag"></i>
+                            <div>
+                                <strong>Code Inventaire :</strong>
+                                <span>{{ equipement.codeInventaire }}</span>
+                            </div>
+                        </div>
+                        <div class="details-item">
+                            <i class="bi bi-tag"></i>
+                            <div>
+                                <strong>Nom :</strong>
+                                <span>{{ equipement.nom }}</span>
+                            </div>
+                        </div>
+                        <div class="details-item">
+                            <i class="bi bi-building"></i>
+                            <div>
+                                <strong>Marque :</strong>
+                                <span>{{ equipement.marque }}</span>
+                            </div>
+                        </div>
+                        <div class="details-item">
+                            <i class="bi bi-cpu"></i>
+                            <div>
+                                <strong>Modèle :</strong>
+                                <span>{{ equipement.modele }}</span>
+                            </div>
+                        </div>
+                        <div class="details-item">
+                            <i class="bi bi-hash"></i>
+                            <div>
+                                <strong>Numéro de Série :</strong>
+                                <span>{{ equipement.numeroSerie }}</span>
+                            </div>
+                        </div>
+                        <div class="details-item">
+                            <i class="bi bi-list"></i>
+                            <div>
+                                <strong>Catégorie :</strong>
+                                <span>{{ equipement.categorie }}</span>
+                            </div>
+                        </div>
+                        <div class="details-item">
+                            <i class="bi bi-calendar"></i>
+                            <div>
+                                <strong>Date d'Achat :</strong>
+                                <span>{{ equipement.dateAchat ? equipement.dateAchat|date('d/m/Y') : 'Non spécifié' }}</span>
+                            </div>
+                        </div>
+                        <div class="details-item">
+                            <i class="bi bi-currency-franc"></i>
+                            <div>
+                                <strong>Prix :</strong>
+                                <span>{{ equipement.prix|number_format(2, ',', ' ') }} FG</span>
+                            </div>
+                        </div>
+                        <div class="details-item">
+                            <i class="bi bi-calendar-check"></i>
+                            <div>
+                                <strong>Fin de Garantie :</strong>
+                                <span>{{ equipement.garantieFin ? equipement.garantieFin|date('d/m/Y') : 'Non spécifié' }}</span>
+                            </div>
+                        </div>
+                        <div class="details-item">
+                            <i class="bi bi-activity"></i>
+                            <div>
+                                <strong>statut :</strong>
+                                <span>{{ equipement.statut }}</span>
+                            </div>
+                        </div>
+                        <div class="details-item">
+                            <i class="bi bi-chat-text"></i>
+                            <div>
+                                <strong>Commentaire :</strong>
+                                <span>{{ equipement.commentaire ?: 'Aucun commentaire' }}</span>
+                            </div>
+                        </div>
+                        <div class="details-item">
+                            <i class="bi bi-person"></i>
+                            <div>
+                                <strong>Utilisateur :</strong>
+                                <span>{{ equipement.utilisateur ?: 'Non assigné' }}</span>
+                            </div>
+                        </div>
+                        <div class="details-item">
+                            <i class="bi bi-geo-alt"></i>
+                            <div>
+                                <strong>Localisation :</strong>
+                                <span>{{ equipement.localisation ? equipement.localisation.nomBatiment : 'Non spécifié' }}</span>
+                            </div>
+                        </div>
+                        <div class="details-item">
+                            <i class="bi bi-file-code"></i>
+                            <div>
+                                <strong>Licences :</strong>
+                                <span>
+                                    {% if equipement.licences|length > 0 %}
+                                        {{ equipement.licences|map(licence => licence.nomLogiciel)|join(', ') }}
+                                    {% else %}
+                                        Aucune licence
+                                    {% endif %}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    {# Boutons d'action #}
+                    <div class="btn-actions">
+                        <a href="{{ path('app_equipement_edit', {'id': equipement.id}) }}" class="btn btn-edit">
+                            <i class="bi bi-pencil-square me-2"></i>
+                            Modifier
+                        </a>
+                        <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">
+                            <i class="bi bi-trash me-2"></i>
+                            Supprimer
+                        </button>
+                        <a href="{{ path('app_equipement_index') }}" class="btn btn-secondary">
+                            <i class="bi bi-arrow-left me-2"></i>
+                            Retour à la liste
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# Modale pour confirmer la suppression #}
+    <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="deleteModalLabel">Confirmer la suppression</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    Êtes-vous sûr de vouloir supprimer l'équipement "{{ equipement.nom }}" ? Cette action est irréversible.
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    {{ form_start(delete_form, {'attr': {'id': 'deleteForm'}}) }}
+                        <button type="submit" class="btn btn-danger">
+                            <i class="bi bi-trash me-2"></i>
+                            Supprimer
+                        </button>
+                    {{ form_end(delete_form) }}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Animation d'entrée
+    const detailsContainer = document.querySelector('.details-container');
+    detailsContainer.style.opacity = '0';
+    detailsContainer.style.transform = 'translateY(30px)';
+    
+    setTimeout(() => {
+        detailsContainer.style.transition = 'all 0.6s ease';
+        detailsContainer.style.opacity = '1';
+        detailsContainer.style.transform = 'translateY(0)';
+    }, 100);
+
+    // Gestion de la modale de suppression
+    const deleteForm = document.getElementById('deleteForm');
+    if (deleteForm) {
+        deleteForm.addEventListener('submit', function() {
+            const deleteBtn = deleteForm.querySelector('button[type="submit"]');
+            deleteBtn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Suppression en cours...';
+            deleteBtn.disabled = true;
+        });
+    }
+});
+</script>
+{% endblock %}

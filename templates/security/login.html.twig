@@ -1,0 +1,98 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Connexion{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <link rel="stylesheet" href="{{ asset('assets/css/auth.css') }}">
+{% endblock %}
+
+{% block body %}
+<div class="auth-container">
+    <div class="auth-card">
+        <div class="auth-header">
+            <h1 class="auth-title">Connexion</h1>
+            <p class="auth-subtitle">Connectez-vous à votre compte</p>
+        </div>
+
+        {# Affiche l'erreur si présente #}
+        {% if error %}
+            <div class="alert alert-danger">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                {{ error.messageKey|trans(error.messageData, 'security') }}
+            </div>
+        {% endif %}
+
+        <form method="post" action="{{ path('app_login') }}">
+            <div class="mb-3">
+                <label for="email" class="form-label">
+                    <i class="fas fa-envelope me-2"></i>Adresse email
+                </label>
+                <div class="input-group">
+                    <span class="input-icon">
+                        <i class="fas fa-envelope"></i>
+                    </span>
+                    <input type="email" 
+                           value="{{ last_username }}" 
+                           name="_username" 
+                           id="email" 
+                           class="form-control with-icon" 
+                           placeholder="votre@email.com"
+                           required 
+                           autofocus>
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <label for="password" class="form-label">
+                    <i class="fas fa-lock me-2"></i>Mot de passe
+                </label>
+                <div class="input-group">
+                    <span class="input-icon">
+                        <i class="fas fa-lock"></i>
+                    </span>
+                    <input type="password" 
+                           name="_password" 
+                           id="password" 
+                           class="form-control with-icon" 
+                           placeholder="••••••••"
+                           required>
+                </div>
+            </div>
+
+            {# Jeton CSRF pour sécuriser la connexion #}
+            <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
+
+            <button type="submit" class="btn btn-auth">
+                <i class="fas fa-sign-in-alt me-2"></i>
+                Se connecter
+            </button>
+        </form>
+
+        <div class="auth-links">
+            {# Lien vers mot de passe oublié si disponible #}
+            {% if has_forgot_password_route %}
+                <p class="mb-2">
+                    <a href="{{ path('app_forgot_password') }}">
+                        <i class="fas fa-key me-1"></i>
+                        Mot de passe oublié ?
+                    </a>
+                </p>
+            {% endif %}
+            
+            <div class="divider">
+                <span>ou</span>
+            </div>
+            
+            {# Lien vers l'inscription #}
+            <p class="mb-0">
+                Pas encore de compte ? 
+                <a href="{{ path('app_register') }}">
+                    <i class="fas fa-user-plus me-1"></i>
+                    Inscrivez-vous ici
+                </a>
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,324 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Modifier une Localisation{% endblock %}
+
+{% block body %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <!-- En-tête avec titre et actions -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="h2 text-warning mb-1">
+                        <i class="fas fa-map-marker-alt me-2"></i>
+                        Modifier la Localisation
+                    </h1>
+                    <p class="text-muted mb-0">Modifiez les informations de cette localisation</p>
+                </div>
+                <div class="d-flex gap-2">
+                    <a href="{{ path('app_localisation_index') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left me-1"></i>
+                        Retour
+                    </a>
+                    <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">
+                        <i class="fas fa-trash me-1"></i>
+                        Supprimer
+                    </button>
+                </div>
+            </div>
+
+            <!-- Carte de localisation -->
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-map me-2"></i>
+                        Localisation sur la carte
+                    </h5>
+                    <small class="text-muted">Cliquez sur la carte pour définir la position exacte</small>
+                </div>
+                <div class="card-body p-0">
+                    <div id="map" style="height: 400px; width: 100%;"></div>
+                </div>
+            </div>
+
+            <!-- Formulaire principal -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-light">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-edit me-2"></i>
+                        Informations de la localisation
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {{ form_start(form, {'attr': {'class': 'needs-validation', 'novalidate': true}}) }}
+                        
+                        <div class="row">
+                            <!-- Informations du bâtiment -->
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-semibold">
+                                    <i class="fas fa-building me-1 text-primary"></i>
+                                    Nom du Bâtiment
+                                </label>
+                                {{ form_widget(form.nomBatiment, {'attr': {'class': 'form-control form-control-lg'}}) }}
+                                {{ form_errors(form.nomBatiment) }}
+                            </div>
+
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label fw-semibold">
+                                    <i class="fas fa-layer-group me-1 text-info"></i>
+                                    Étage
+                                </label>
+                                {{ form_widget(form.etage, {'attr': {'class': 'form-control form-control-lg'}}) }}
+                                {{ form_errors(form.etage) }}
+                            </div>
+
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label fw-semibold">
+                                    <i class="fas fa-door-open me-1 text-success"></i>
+                                    Salle
+                                </label>
+                                {{ form_widget(form.salle, {'attr': {'class': 'form-control form-control-lg'}}) }}
+                                {{ form_errors(form.salle) }}
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-semibold">
+                                    <i class="fas fa-code me-1 text-warning"></i>
+                                    Code Local
+                                </label>
+                                {{ form_widget(form.codeLocal, {'attr': {'class': 'form-control form-control-lg'}}) }}
+                                {{ form_errors(form.codeLocal) }}
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-semibold">
+                                    <i class="fas fa-user-tie me-1 text-secondary"></i>
+                                    Responsable
+                                </label>
+                                {{ form_widget(form.responsable, {'attr': {'class': 'form-control form-control-lg'}}) }}
+                                {{ form_errors(form.responsable) }}
+                            </div>
+                        </div>
+
+                        <!-- Coordonnées géographiques -->
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-semibold">
+                                    <i class="fas fa-crosshairs me-1 text-danger"></i>
+                                    Latitude
+                                </label>
+                                {{ form_widget(form.latitude, {'attr': {'class': 'form-control', 'readonly': true}}) }}
+                                {{ form_errors(form.latitude) }}
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-semibold">
+                                    <i class="fas fa-crosshairs me-1 text-danger"></i>
+                                    Longitude
+                                </label>
+                                {{ form_widget(form.longitude, {'attr': {'class': 'form-control', 'readonly': true}}) }}
+                                {{ form_errors(form.longitude) }}
+                            </div>
+                        </div>
+
+                        <!-- Boutons d'action -->
+                        <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+                            <a href="{{ path('app_localisation_index') }}" class="btn btn-outline-secondary btn-lg">
+                                <i class="fas fa-times me-1"></i>
+                                Annuler
+                            </a>
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-save me-1"></i>
+                                Mettre à jour
+                            </button>
+                        </div>
+
+                    {{ form_end(form) }}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmation de suppression -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-bottom-0">
+                <h5 class="modal-title text-danger" id="deleteModalLabel">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Confirmer la suppression
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+            </div>
+            <div class="modal-body text-center py-4">
+                <div class="mb-3">
+                    <i class="fas fa-trash-alt text-danger" style="font-size: 3rem;"></i>
+                </div>
+                <p class="mb-3">Êtes-vous sûr de vouloir supprimer cette localisation ?</p>
+                <p class="text-muted small">Cette action est irréversible.</p>
+            </div>
+            <div class="modal-footer border-top-0 justify-content-center">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>
+                    Annuler
+                </button>
+                <form method="post" action="{{ path('app_localisation_delete', {'id': app.request.get('id')}) }}" class="d-inline">
+                    <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ app.request.get('id')) }}">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash me-1"></i>
+                        Supprimer définitivement
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        // Initialisation des éléments du formulaire
+        const latInput = document.getElementById('localisation_latitude');
+        const lngInput = document.getElementById('localisation_longitude');
+
+        // Coordonnées initiales (Conakry par défaut)
+        const initialLat = parseFloat(latInput.value) || 9.535;
+        const initialLng = parseFloat(lngInput.value) || -13.680;
+
+        // Initialisation de la carte
+        const map = L.map('map').setView([initialLat, initialLng], 16);
+
+        // Ajout des tuiles de la carte
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+
+        // Marqueur initial
+        let marker = L.marker([initialLat, initialLng], {
+            draggable: true,
+            title: 'Position de la localisation'
+        }).addTo(map);
+
+        // Popup d'information sur le marqueur
+        marker.bindPopup('<b>Position actuelle</b><br>Cliquez sur la carte pour déplacer').openPopup();
+
+        // Fonction pour mettre à jour les coordonnées
+        function updateCoordinates(lat, lng) {
+            latInput.value = lat.toFixed(6);
+            lngInput.value = lng.toFixed(6);
+            
+            // Animation du marqueur
+            marker.setLatLng([lat, lng]);
+            
+            // Mise à jour du popup
+            marker.bindPopup(`<b>Nouvelle position</b><br>Lat: ${lat.toFixed(6)}<br>Lng: ${lng.toFixed(6)}`);
+        }
+
+        // Événement clic sur la carte
+        map.on('click', function(e) {
+            const { lat, lng } = e.latlng;
+            updateCoordinates(lat, lng);
+        });
+
+        // Événement glisser-déposer du marqueur
+        marker.on('dragend', function(e) {
+            const { lat, lng } = e.target.getLatLng();
+            updateCoordinates(lat, lng);
+        });
+
+        // Validation du formulaire
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.querySelector('.needs-validation');
+            if (form) {
+                form.addEventListener('submit', function(event) {
+                    if (!form.checkValidity()) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                    }
+                    form.classList.add('was-validated');
+                });
+            }
+        });
+
+        // Animation d'apparition des éléments
+        document.querySelectorAll('.card').forEach((card, index) => {
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(20px)';
+            setTimeout(() => {
+                card.style.transition = 'all 0.3s ease';
+                card.style.opacity = '1';
+                card.style.transform = 'translateY(0)';
+            }, index * 100);
+        });
+    </script>
+{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        .card {
+            border: none;
+            border-radius: 12px;
+        }
+        
+        .card-header {
+            border-radius: 12px 12px 0 0 !important;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .form-control:focus {
+            border-color: #ffc107;
+            box-shadow: 0 0 0 0.2rem rgba(255, 193, 7, 0.25);
+        }
+        
+        .btn {
+            border-radius: 8px;
+            font-weight: 500;
+        }
+        
+        .modal-content {
+            border-radius: 12px;
+            border: none;
+        }
+        
+        .leaflet-container {
+            border-radius: 0 0 12px 12px;
+        }
+        
+        /* Animation des icônes */
+        .fas {
+            transition: transform 0.2s ease;
+        }
+        
+        .btn:hover .fas {
+            transform: scale(1.1);
+        }
+        
+        /* Style pour les labels */
+        .form-label {
+            color: #495057;
+            margin-bottom: 0.5rem;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .d-flex.justify-content-between {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            .d-flex.gap-2 {
+                justify-content: stretch;
+            }
+            
+            .d-flex.gap-2 .btn {
+                flex: 1;
+            }
+        }
+    </style>
+{% endblock %}

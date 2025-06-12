@@ -1,0 +1,20 @@
+{# templates/licence/edit.html.twig #}
+{% extends 'base.html.twig' %}
+
+{% block title %}Modifier une Licence{% endblock %}
+
+{% block body %}
+<div class="container mt-5">
+    <h1 class="mb-4 text-center text-primary">Modifier la Licence</h1>
+
+    {% include 'licence/_form.html.twig' with {'button_label': 'Mettre à jour'} %}
+
+    <div class="text-center mt-3">
+        <a href="{{ path('app_licence_index') }}" class="btn btn-secondary">Retour à la liste</a>
+    </div>
+
+    <div class="mt-2 text-center">
+        {% include 'licence/_delete_form.html.twig' %}
+    </div>
+</div>
+{% endblock %}

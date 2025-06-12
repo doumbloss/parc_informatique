@@ -1,0 +1,24 @@
+# config/routes.yaml
+controllers:
+    resource: ../src/Controller/
+    type: annotation
+
+app_dashboard:
+    path: /dashboard
+    controller: App\Controller\DashboardController::index
+
+app_equipment_new:
+    path: /equipment/new
+    controller: App\Controller\EquipmentController::new # À créer
+
+app_equipment_index:
+    path: /equipment
+    controller: App\Controller\EquipmentController::index # À créer
+
+app_report_index:
+    path: /reports
+    controller: App\Controller\ReportController::index # À créer
+
+app_settings:
+    path: /settings
+    controller: App\Controller\SettingsController::index # À créer

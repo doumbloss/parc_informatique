@@ -1,0 +1,376 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Inscription{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <link rel="stylesheet" href="{{ asset('assets/css/auth.css') }}">
+    <style>
+        /* Styles spécifiques à register */
+        .register-card {
+            max-width: 1000px;
+            overflow: hidden;
+        }
+        
+        .register-image {
+            background: linear-gradient(45deg, rgba(102, 126, 234, 0.8), rgba(118, 75, 162, 0.8)),
+                        url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000"><defs><linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:%23667eea;stop-opacity:1" /><stop offset="100%" style="stop-color:%23764ba2;stop-opacity:1" /></linearGradient></defs><rect width="1000" height="1000" fill="url(%23grad1)"/><circle cx="200" cy="200" r="100" fill="rgba(255,255,255,0.1)"/><circle cx="800" cy="300" r="150" fill="rgba(255,255,255,0.05)"/><circle cx="300" cy="700" r="80" fill="rgba(255,255,255,0.1)"/><circle cx="700" cy="800" r="120" fill="rgba(255,255,255,0.05)"/><path d="M100,500 Q500,300 900,500 T1100,500" stroke="rgba(255,255,255,0.1)" stroke-width="3" fill="none"/><path d="M0,600 Q400,400 800,600 T1200,600" stroke="rgba(255,255,255,0.05)" stroke-width="2" fill="none"/></svg>');
+            background-size: cover;
+            background-position: center;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            color: white;
+            text-align: center;
+            padding: 3rem;
+        }
+        
+        .register-image::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.2);
+            z-index: 1;
+        }
+        
+        .register-image-content {
+            position: relative;
+            z-index: 2;
+        }
+        
+        .register-image h2 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        .register-image p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            line-height: 1.6;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+        }
+        
+        .register-form {
+            padding: 3rem;
+        }
+        
+        .btn-register {
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .alert-danger {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+            color: white;
+            border: none;
+        }
+        
+        .form-check {
+            margin-bottom: 1.5rem;
+            padding-left: 2rem;
+        }
+        
+        .form-check-input {
+            transform: scale(1.2);
+            margin-top: 0.3rem;
+        }
+        
+        .form-check-input:checked {
+            background-color: #667eea;
+            border-color: #667eea;
+        }
+        
+        .form-check-label {
+            color: #6c757d;
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+        
+        .form-error {
+            color: #dc3545;
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+            display: block;
+        }
+        
+        .is-invalid {
+            border-color: #dc3545 !important;
+        }
+        
+        .is-valid {
+            border-color: #28a745 !important;
+        }
+        
+        .password-strength {
+            margin-top: 0.5rem;
+            font-size: 0.8rem;
+        }
+        
+        .strength-bar {
+            height: 4px;
+            background: #e9ecef;
+            border-radius: 2px;
+            overflow: hidden;
+            margin-bottom: 0.5rem;
+        }
+        
+        .strength-fill {
+            height: 100%;
+            transition: all 0.3s ease;
+            border-radius: 2px;
+        }
+        
+        .strength-weak { background: #dc3545; width: 25%; }
+        .strength-fair { background: #ffc107; width: 50%; }
+        .strength-good { background: #17a2b8; width: 75%; }
+        .strength-strong { background: #28a745; width: 100%; }
+        
+        @media (max-width: 768px) {
+            .register-card {
+                margin: 1rem;
+            }
+            
+            .register-image {
+                display: none;
+            }
+            
+            .register-form {
+                padding: 2rem;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+    <div class="auth-container">
+        <div class="register-card auth-card">
+            <div class="row g-0">
+                <div class="col-lg-6">
+                    <div class="register-image">
+                        <div class="register-image-content">
+                            <h2>Rejoignez-nous</h2>
+                            <p>Créez votre compte et découvrez toutes les fonctionnalités de notre plateforme. Une expérience unique vous attend !</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="register-form">
+                        <div class="auth-header">
+                            <h1 class="auth-title">Créer un compte</h1>
+                            <p class="auth-subtitle">Remplissez le formulaire pour commencer</p>
+                        </div>
+
+                        {{ form_start(form, {'attr': {'novalidate': 'novalidate', 'id': 'registrationForm'}}) }}
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-floating">
+                                        {{ form_widget(form.firstName, {'attr': {'class': 'form-control', 'placeholder': 'Prénom'}}) }}
+                                        {{ form_label(form.firstName, null, {'label_attr': {'class': 'form-label'}}) }}
+                                        {{ form_errors(form.firstName) }}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-floating">
+                                        {{ form_widget(form.lastName, {'attr': {'class': 'form-control', 'placeholder': 'Nom'}}) }}
+                                        {{ form_label(form.lastName, null, {'label_attr': {'class': 'form-label'}}) }}
+                                        {{ form_errors(form.lastName) }}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-floating">
+                                {{ form_widget(form.email, {'attr': {'class': 'form-control', 'placeholder': 'Adresse email'}}) }}
+                                {{ form_label(form.email, null, {'label_attr': {'class': 'form-label'}}) }}
+                                {{ form_errors(form.email) }}
+                            </div>
+
+                            <div class="form-floating">
+                                {{ form_widget(form.plainPassword.first, {'attr': {'class': 'form-control', 'placeholder': 'Mot de passe', 'id': 'password'}}) }}
+                                {{ form_label(form.plainPassword.first, null, {'label_attr': {'class': 'form-label'}}) }}
+                                {{ form_errors(form.plainPassword.first) }}
+                                
+                                <div class="password-strength" id="passwordStrength" style="display: none;">
+                                    <div class="strength-bar">
+                                        <div class="strength-fill" id="strengthFill"></div>
+                                    </div>
+                                    <span id="strengthText"></span>
+                                </div>
+                            </div>
+
+                            <div class="form-floating">
+                                {{ form_widget(form.plainPassword.second, {'attr': {'class': 'form-control', 'placeholder': 'Confirmer le mot de passe', 'id': 'confirmPassword'}}) }}
+                                {{ form_label(form.plainPassword.second, null, {'label_attr': {'class': 'form-label'}}) }}
+                                {{ form_errors(form.plainPassword.second) }}
+                            </div>
+
+                            <div class="form-check">
+                                {{ form_widget(form.agreeTerms, {'attr': {'class': 'form-check-input'}}) }}
+                                {{ form_label(form.agreeTerms, null, {'label_attr': {'class': 'form-check-label'}}) }}
+                                {{ form_errors(form.agreeTerms) }}
+                            </div>
+
+                            {% if reCAPTCHA_enabled %}
+                                <div class="g-recaptcha" data-sitekey="{{ recaptcha_site_key }}"></div>
+                            {% endif %}
+
+                            <button type="submit" class="btn btn-auth btn-register" id="submitBtn">
+                                <i class="fas fa-user-plus me-2"></i>
+                                Créer mon compte
+                            </button>
+
+                        {{ form_end(form) }}
+
+                        <div class="auth-links">
+                            Déjà un compte ?
+                            <a href="{{ path('app_login') }}">Se connecter</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    {% if reCAPTCHA_enabled %}
+        <script src="https://www.google.com/recaptcha/api.js"></script>
+    {% endif %}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('registrationForm');
+            const passwordField = document.getElementById('password');
+            const confirmPasswordField = document.getElementById('confirmPassword');
+            const submitBtn = document.getElementById('submitBtn');
+            const strengthIndicator = document.getElementById('passwordStrength');
+            const strengthFill = document.getElementById('strengthFill');
+            const strengthText = document.getElementById('strengthText');
+
+            // Animation d'entrée
+            const registerCard = document.querySelector('.register-card');
+            registerCard.style.opacity = '0';
+            registerCard.style.transform = 'translateY(30px)';
+            
+            setTimeout(() => {
+                registerCard.style.transition = 'all 0.8s ease';
+                registerCard.style.opacity = '1';
+                registerCard.style.transform = 'translateY(0)';
+            }, 200);
+
+            // Validation en temps réel
+            const inputs = document.querySelectorAll('.form-control');
+            inputs.forEach(input => {
+                input.addEventListener('blur', validateField);
+                input.addEventListener('input', function() {
+                    if (this.classList.contains('is-invalid') && this.value.trim() !== '') {
+                        validateField.call(this);
+                    }
+                });
+            });
+
+            function validateField() {
+                const value = this.value.trim();
+                this.classList.remove('is-invalid', 'is-valid');
+                
+                if (value === '') {
+                    this.classList.add('is-invalid');
+                } else if (this.type === 'email') {
+                    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                    if (emailRegex.test(value)) {
+                        this.classList.add('is-valid');
+                    } else {
+                        this.classList.add('is-invalid');
+                    }
+                } else {
+                    this.classList.add('is-valid');
+                }
+            }
+
+            // Indicateur de force du mot de passe
+            passwordField.addEventListener('input', function() {
+                const password = this.value;
+                
+                if (password.length > 0) {
+                    strengthIndicator.style.display = 'block';
+                    const strength = calculatePasswordStrength(password);
+                    updateStrengthIndicator(strength);
+                } else {
+                    strengthIndicator.style.display = 'none';
+                }
+            });
+
+            function calculatePasswordStrength(password) {
+                let score = 0;
+                
+                if (password.length >= 8) score++;
+                if (password.match(/[a-z]/)) score++;
+                if (password.match(/[A-Z]/)) score++;
+                if (password.match(/[0-9]/)) score++;
+                if (password.match(/[^a-zA-Z0-9]/)) score++;
+                
+                return score;
+            }
+
+            function updateStrengthIndicator(strength) {
+                strengthFill.className = 'strength-fill';
+                
+                switch(strength) {
+                    case 0:
+                    case 1:
+                        strengthFill.classList.add('strength-weak');
+                        strengthText.textContent = 'Faible';
+                        strengthText.style.color = '#dc3545';
+                        break;
+                    case 2:
+                        strengthFill.classList.add('strength-fair');
+                        strengthText.textContent = 'Moyen';
+                        strengthText.style.color = '#ffc107';
+                        break;
+                    case 3:
+                    case 4:
+                        strengthFill.classList.add('strength-good');
+                        strengthText.textContent = 'Bon';
+                        strengthText.style.color = '#17a2b8';
+                        break;
+                    case 5:
+                        strengthFill.classList.add('strength-strong');
+                        strengthText.textContent = 'Excellent';
+                        strengthText.style.color = '#28a745';
+                        break;
+                }
+            }
+
+            // Vérification de correspondance des mots de passe
+            confirmPasswordField.addEventListener('input', function() {
+                const password = passwordField.value;
+                const confirmPassword = this.value;
+                
+                this.classList.remove('is-invalid', 'is-valid');
+                
+                if (confirmPassword === '') {
+                    return;
+                } else if (password === confirmPassword) {
+                    this.classList.add('is-valid');
+                } else {
+                    this.classList.add('is-invalid');
+                }
+            });
+
+            // Animation du bouton de soumission
+            form.addEventListener('submit', function() {
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Création en cours...';
+                submitBtn.disabled = true;
+            });
+
+            // Focus automatique sur le premier champ
+            document.querySelector('input[name="registration_form[firstName]"]').focus();
+        });
+    </script>
+{% endblock %}

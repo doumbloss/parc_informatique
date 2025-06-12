@@ -1,0 +1,28 @@
+{# templates/panne/new.html.twig #}
+{% extends 'base.html.twig' %}
+
+{% block title %}Signaler une Nouvelle Panne{% endblock %}
+
+{% block body %}
+<div class="container mt-5">
+    <h1 class="mb-4 text-center text-danger">Signaler une Panne</h1>
+
+    <!-- Affichage des messages flash -->
+    {% for message in app.flashes('success') %}
+        <div class="alert alert-success">
+            {{ message }}
+        </div>
+    {% endfor %}
+    {% for message in app.flashes('error') %}
+        <div class="alert alert-danger">
+            {{ message }}
+        </div>
+    {% endfor %}
+
+    {% include 'panne/_form.html.twig' with {'button_label': 'Créer'} %}
+
+    <div class="text-center mt-3">
+        <a href="{{ path('app_panne_index') }}" class="btn btn-secondary">Retour à la liste</a>
+    </div>
+</div>
+{% endblock %}

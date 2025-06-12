@@ -1,0 +1,20 @@
+{# templates/panne/edit.html.twig #}
+{% extends 'base.html.twig' %}
+
+{% block title %}Modifier la Panne{% endblock %}
+
+{% block body %}
+<div class="container mt-5">
+    <h1 class="mb-4 text-center text-primary">Modifier la Panne</h1>
+
+    {% include 'panne/_form.html.twig' with {'button_label': 'Mettre à jour'} %}
+
+    <div class="text-center mt-3">
+        <a href="{{ path('app_panne_index') }}" class="btn btn-secondary">Retour à la liste</a>
+    </div>
+
+    <div class="text-center mt-2">
+        {% include 'panne/_delete_form.html.twig' %}
+    </div>
+</div>
+{% endblock %}

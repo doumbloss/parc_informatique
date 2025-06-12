@@ -1,0 +1,470 @@
+{# {% extends 'base.html.twig' %}
+
+{% block title %}Liste des Pannes{% endblock %}
+
+{% block body %}
+<div class="container mt-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="text-danger">Gestion des Pannes</h1>
+        <a href="{{ path('app_panne_new') }}" class="btn btn-danger">Signaler une nouvelle panne</a>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body table-responsive">
+            <table class="table table-hover table-bordered text-center align-middle">
+                <thead class="table-danger">
+                    <tr>
+                        <th>Id</th>
+                        <th>Code Inventaire</th>
+                        <th>Date Signalement</th>
+                        <th>Description</th>
+                        <th>Statut</th>
+                        <th>Date Résolution</th>
+                        <th>Type Intervention</th>
+                        <th>Intervenant</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for panne in pannes %}
+                    <tr>
+                        <td>{{ panne.id }}</td>
+                        <td>{{ panne.codeInventaire }}</td>
+                        <td>{{ panne.dateSingnalement ? panne.dateSingnalement|date('d/m/Y') : '-' }}</td>
+                        {{ panne.description|length > 30 ? panne.description|slice(0, 30) ~ '...' : panne.description }}
+                        <td>{{ panne.statut }}</td>
+                        <td>{{ panne.dateResolution ? panne.dateResolution|date('d/m/Y') : '-' }}</td>
+                        <td>{{ panne.typeIntervention }}</td>
+                        <td>{{ panne.intervenantId ? panne.intervenantId : '-' }}</td>
+                        <td>
+                            <div class="btn-group" role="group">
+                                <a href="{{ path('app_panne_show', {'id': panne.id}) }}" class="btn btn-outline-primary btn-sm">Voir</a>
+                                <a href="{{ path('app_panne_edit', {'id': panne.id}) }}" class="btn btn-outline-secondary btn-sm">Modifier</a>
+                            </div>
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="9" class="text-center">Aucune panne enregistrée.</td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %} #}
+
+
+{% extends 'base.html.twig' %}
+
+{% block title %}Liste des Pannes{% endblock %}
+
+{% block stylesheets %}
+    {{ parent() }}
+    <style>
+        :root {
+            --primary: #dc3545;
+            --primary-light: #f8d7da;
+            --primary-dark: #721c24;
+            --success: #198754;
+            --warning: #ffc107;
+            --info: #0dcaf0;
+            --glass: rgba(255, 255, 255, 0.1);
+            --shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        body { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; }
+        
+        .glass-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+            box-shadow: var(--shadow);
+        }
+
+        .status-badge {
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .status-en-attente { background: linear-gradient(45deg, #ff6b6b, #ee5a52); color: white; }
+        .status-en-cours { background: linear-gradient(45deg, #4ecdc4, #44a08d); color: white; }
+        .status-resolu { background: linear-gradient(45deg, #96e6a1, #4ecdc4); color: white; }
+
+        .table-modern {
+            border: none;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        }
+
+        .table-modern thead { background: linear-gradient(45deg, var(--primary), #c82333); }
+        .table-modern thead th { 
+            border: none; 
+            color: white; 
+            font-weight: 600; 
+            padding: 1.2rem 1rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .table-modern tbody tr {
+            transition: all 0.3s ease;
+            border: none;
+        }
+
+        .table-modern tbody tr:hover {
+            background: linear-gradient(90deg, rgba(220, 53, 69, 0.05), rgba(220, 53, 69, 0.1));
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .table-modern td {
+            border: none;
+            padding: 1rem;
+            vertical-align: middle;
+        }
+
+        .btn-modern {
+            border: none;
+            border-radius: 25px;
+            padding: 0.6rem 1.5rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-primary-modern {
+            background: linear-gradient(45deg, var(--primary), #c82333);
+            color: white;
+            box-shadow: 0 4px 15px rgba(220, 53, 69, 0.3);
+        }
+
+        .btn-primary-modern:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(220, 53, 69, 0.4);
+            color: white;
+        }
+
+        .btn-action {
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 0.25rem;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .btn-view { background: linear-gradient(45deg, var(--info), #0aa8cc); color: white; }
+        .btn-edit { background: linear-gradient(45deg, var(--warning), #e0a800); color: white; }
+        .btn-resolve { background: linear-gradient(45deg, var(--success), #146c43); color: white; }
+
+        .btn-action:hover {
+            transform: scale(1.1) translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .code-tag {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            padding: 0.4rem 0.8rem;
+            border-radius: 20px;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        .stats-header {
+            background: var(--glass);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .pulse { animation: pulse 2s infinite; }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .empty-state {
+            padding: 4rem 2rem;
+            text-align: center;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .empty-icon {
+            font-size: 4rem;
+            background: linear-gradient(45deg, var(--primary), #c82333);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 1rem;
+        }
+
+    </style>
+{% endblock %}
+
+{% block body %}
+<div class="container mt-4 fade-in">
+    <!-- En-tête moderne avec statistiques -->
+    <div class="stats-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="mb-1" style="background: linear-gradient(45deg, var(--primary), #c82333); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 800;">
+                    <i class="fas fa-cogs me-3"></i>Gestion des Pannes
+                </h1>
+                <p class="text-muted mb-0">Système de suivi des interventions techniques</p>
+            </div>
+            <div class="text-end">
+                <div class="h2 mb-0 text-primary pulse">{{ pannes|length }}</div>
+                <small class="text-muted">Panne(s) active(s)</small>
+            </div>
+        </div>
+        <div class="mt-3">
+            <a href="{{ path('app_panne_new') }}" class="btn btn-primary-modern btn-modern">
+                <i class="fas fa-plus me-2"></i>Signaler une panne
+            </a>
+        </div>
+    </div>
+
+    <!-- Tableau moderne -->
+    <div class="glass-card">
+        <div class="card-body p-0">
+            {% if pannes|length > 0 %}
+                <div class="table-responsive">
+                    <table class="table table-modern mb-0">
+                        <thead>
+                            <tr>
+                                {% for header in ['ID', 'Code', 'Date', 'Description', 'Statut', 'Résolution', 'Type', 'Intervenant', 'Actions'] %}
+                                    <th class="text-center">{{ header }}</th>
+                                {% endfor %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                        {% for panne in pannes %}
+                            <tr class="fade-in" style="animation-delay: {{ loop.index * 0.1 }}s" data-panne-id="{{ panne.id }}" 
+                                data-type-intervention="{{ panne.typeIntervention|default('') }}" 
+                                data-intervenant-id="{{ panne.intervenantId|default('') }}">
+                                <td class="text-center">
+                                    <span class="badge bg-primary rounded-pill">#{{ panne.id }}</span>
+                                </td>
+                                <td class="text-center">
+                                    <span class="code-tag">{{ panne.codeInventaire }}</span>
+                                </td>
+                                <td class="text-center">
+                                    {% if panne.dateSignalement %}
+                                        <div>{{ panne.dateSignalement|date('d/m/Y') }}</div>
+                                        <small class="text-muted">{{ panne.dateSignalement|date('H:i') }}</small>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td style="max-width: 200px;">
+                                    <div class="text-truncate" title="{{ panne.description }}">
+                                        {{ panne.description|length > 40 ? panne.description|slice(0, 40) ~ '...' : panne.description }}
+                                    </div>
+                                </td>
+                                <td class="text-center">
+                                    {% set statusClass = {
+                                        'en attente': 'status-en-attente',
+                                        'en cours': 'status-en-cours',
+                                        'résolu': 'status-resolu',
+                                        'resolu': 'status-resolu'
+                                    }[panne.statut|lower] ?? 'status-en-attente' %}
+                                    <span class="status-badge {{ statusClass }}">{{ panne.statut }}</span>
+                                </td>
+                                <td class="text-center">
+                                    {% if panne.dateResolution %}
+                                        <div>{{ panne.dateResolution|date('d/m/Y') }}</div>
+                                        <small class="text-muted">{{ panne.dateResolution|date('H:i') }}</small>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center">
+                                    {% if panne.typeIntervention %}
+                                        <span class="badge bg-secondary rounded-pill">{{ panne.typeIntervention }}</span>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center">
+                                    {% if panne.intervenantId %}
+                                        <i class="fas fa-user-check text-success me-1"></i>{{ panne.intervenantId }}
+                                    {% else %}
+                                        <span class="text-muted">Non assigné</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center">
+                                    <div class="d-flex justify-content-center">
+                                        <a href="{{ path('app_panne_show', {'id': panne.id}) }}" 
+                                           class="btn btn-action btn-view" title="Voir les détails">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{{ path('app_panne_edit', {'id': panne.id}) }}" 
+                                           class="btn btn-action btn-edit" title="Modifier">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        {% if panne.statut|lower not in ['résolu', 'resolu'] %}
+                                            <button class="btn btn-action btn-resolve" 
+                                                    title="Marquer comme résolu"
+                                                    onclick="resolveIssue({{ panne.id }})">
+                                                <i class="fas fa-check"></i>
+                                            </button>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+
+                            <!-- Modal spécifique à chaque panne -->
+                            <div class="modal fade" id="resolveModal_{{ panne.id }}" tabindex="-1" aria-labelledby="resolveModalLabel_{{ panne.id }}" aria-hidden="true">
+                            <div class="modal-dialog modal-dialog-centered">
+                                <div class="modal-content glass-card" style="border: none; pointer-events: auto;">
+                                    <div class="modal-header border-0">
+                                        <h5 class="modal-title" id="resolveModalLabel_{{ panne.id }}">Résoudre la panne #{{ panne.id }}</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <form id="resolveForm_{{ panne.id }}" method="POST" action="{{ path('app_panne_resolve', {'id': panne.id}) }}">
+                                            <input type="hidden" name="token" value="{{ csrf_token('resolve' ~ panne.id) }}">
+                                            <input type="hidden" name="panne_id" value="{{ panne.id }}">
+                                            <div class="mb-3">
+                                                <label class="form-label">Note de résolution</label>
+                                                <textarea class="form-control" name="resolution_note" id="resolve_resolution_note_{{ panne.id }}" rows="3" 
+                                                        placeholder="Décrivez la résolution appliquée..." required style="pointer-events: auto;"></textarea>
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">Type d'intervention</label>
+                                                <input type="text" class="form-control" name="typeIntervention" id="resolve_typeIntervention_{{ panne.id }}" value="{{ panne.typeIntervention|default('') }}" required style="pointer-events: auto;">
+                                            </div>
+                                            <div class="mb-3">
+                                                <label class="form-label">Intervenant ID</label>
+                                                <input type="number" class="form-control" name="intervenantId" id="resolve_intervenantId_{{ panne.id }}" value="{{ panne.intervenantId|default('') }}" required style="pointer-events: auto;">
+                                            </div>
+                                            <!-- Ajout du champ CSRF explicite (facultatif, déjà couvert par le token caché) -->
+                                            <input type="hidden" name="_token" value="{{ csrf_token('resolve' ~ panne.id) }}">
+                                        </form>
+                                    </div>
+                                    <div class="modal-footer border-0">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                                        <button type="submit" form="resolveForm_{{ panne.id }}" class="btn btn-primary-modern">Résoudre</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <div class="empty-icon">
+                        <i class="fas fa-tools"></i>
+                    </div>
+                    <h3 class="mb-3">Aucune panne enregistrée</h3>
+                    <p class="text-muted mb-4">Commencez par signaler une nouvelle panne pour démarrer le suivi.</p>
+                    <a href="{{ path('app_panne_new') }}" class="btn btn-primary-modern btn-modern">
+                        <i class="fas fa-plus me-2"></i>Signaler une panne
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+    {{ parent() }}
+    <script>
+        // Animation des éléments au scroll
+        const observerOptions = { threshold: 0.1, rootMargin: '0px 0px -50px 0px' };
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+
+        function resolveIssue(id) {
+    const modal = new bootstrap.Modal(document.getElementById(`resolveModal_${id}`));
+    const form = document.getElementById(`resolveForm_${id}`);
+
+    // Ajouter un écouteur pour déboguer la soumission
+    form.addEventListener('submit', (event) => {
+        console.log('Formulaire soumis pour panne ID:', id);
+        console.log('Données soumises:', new FormData(form));
+
+        // Optionnel : Ajouter un gestionnaire de réponse
+        fetch(form.action, {
+            method: 'POST',
+            body: new FormData(form),
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Réponse non valide');
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('Réponse du serveur:', data);
+            if (data.success) {
+                alert('Panne résolue avec succès !');
+                modal.hide(); // Fermer le modal
+                location.reload(); // Recharger la page pour refléter les changements
+            } else {
+                alert('Erreur : ' + (data.message || 'Échec de la résolution'));
+            }
+        })
+        .catch(error => {
+            console.error('Erreur lors de la soumission:', error);
+            alert('Une erreur est survenue : ' + error.message);
+        });
+    });
+
+    modal.show();
+}
+            // Tooltips
+        document.querySelectorAll('[title]').forEach(el => {
+            new bootstrap.Tooltip(el);
+        });
+
+        // Effet de parallaxe léger sur le background
+        window.addEventListener('scroll', () => {
+            const scrolled = window.pageYOffset;
+            document.body.style.backgroundPosition = `center ${scrolled * 0.5}px`;
+        });
+    </script>
+{% endblock %}
